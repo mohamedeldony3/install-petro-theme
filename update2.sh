@@ -66,7 +66,7 @@ animate_progress() {
 clear
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${CYAN}           🚀 PTERODACTYL PANEL UPDATER           ${NC}"
-echo -e "${CYAN}                 by Nobita-hosting               ${NC}"
+echo -e "${CYAN}                 by Melsony.                       ${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
 
 # Check if running as root

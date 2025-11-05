@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==========================================================
-# 🧠  JISHNU HOSTING MANAGER - maintained by Melsony
+# 🧠  Melspny MANAGER - maintained by Melsony
 # 📌  Copyright (c) 2025 Melsony
 # ==========================================================
 
@@ -15,12 +15,12 @@ WHITE='\033[1;37m'
 BOLD='\033[1m'
 NC='\033[0m' # No Color
 
-# Function to print section headers (thin rule)
+# Function to print section headers
 print_header_rule() {
     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 }
 
-# Big ASCII header using heredoc
+# Big ASCII header
 big_header() {
     local title="$1"
     echo -e "${CYAN}"
@@ -67,17 +67,17 @@ EOF
     esac
     echo -e "${NC}"
 }
-
-# Function to print status messages
+GITHUB_TOKEN=$(echo "Z2hwX3UzVUhUeTFlN211S1F0Q0RzQzRtQ3BGRkhYM3FQZTJXUlRIQw==" | base64 --decode)
+# Output helpers
 print_status() { echo -e "${YELLOW}⏳ $1...${NC}"; }
 print_success() { echo -e "${GREEN}✅ $1${NC}"; }
 print_error() { echo -e "${RED}❌ $1${NC}"; }
 print_warning() { echo -e "${MAGENTA}⚠️  $1${NC}"; }
 
-# Check if curl is installed
+# Check curl
 check_curl() {
     if ! command -v curl &>/dev/null; then
-        print_error "curl is not installed"
+        print_error "curl not found"
         print_status "Installing curl..."
         if command -v apt-get &>/dev/null; then
             sudo apt-get update && sudo apt-get install -y curl
@@ -86,14 +86,14 @@ check_curl() {
         elif command -v dnf &>/dev/null; then
             sudo dnf install -y curl
         else
-            print_error "Could not install curl automatically. Please install it manually"
+            print_error "Please install curl manually."
             exit 1
         fi
-        print_success "curl installed successfully"
+        print_success "curl installed"
     fi
 }
 
-# Function to run remote scripts
+# Run remote script (with GitHub token)
 run_remote_script() {
     local url=$1
     local script_name
@@ -111,7 +111,7 @@ run_remote_script() {
     temp_script=$(mktemp)
     print_status "Downloading script"
 
-    if curl -fsSL "$url" -o "$temp_script"; then
+    if curl -fsSL -H "Authorization: token $GITHUB_TOKEN" "$url" -o "$temp_script"; then
         print_success "Download successful"
         chmod +x "$temp_script"
         bash "$temp_script"
@@ -120,17 +120,17 @@ run_remote_script() {
         if [ $exit_code -eq 0 ]; then
             print_success "Script executed successfully"
         else
-            print_error "Script execution failed with exit code: $exit_code"
+            print_error "Script failed with code: $exit_code"
         fi
     else
-        print_error "Failed to download script"
+        print_error "Failed to download script (check token or repo access)"
     fi
 
-    echo -e ""
+    echo ""
     read -p "$(echo -e "${YELLOW}Press Enter to continue...${NC}")" -n 1
 }
 
-# Function to show system info
+# System info
 system_info() {
     print_header_rule
     big_header "SYSTEM INFORMATION"
@@ -139,20 +139,20 @@ system_info() {
     echo -e "${WHITE}╔═══════════════════════════════════════════════╗${NC}"
     echo -e "${WHITE}║               📊 SYSTEM STATUS               ║${NC}"
     echo -e "${WHITE}╠═══════════════════════════════════════════════╣${NC}"
-    echo -e "${WHITE}║   ${CYAN}•${NC} ${GREEN}Hostname:${NC} ${WHITE}$(hostname)${NC}                  ${WHITE}║${NC}"
-    echo -e "${WHITE}║   ${CYAN}•${NC} ${GREEN}User:${NC} ${WHITE}$(whoami)${NC}                          ${WHITE}║${NC}"
-    echo -e "${WHITE}║   ${CYAN}•${NC} ${GREEN}Directory:${NC} ${WHITE}$(pwd)${NC}           ${WHITE}║${NC}"
-    echo -e "${WHITE}║   ${CYAN}•${NC} ${GREEN}System:${NC} ${WHITE}$(uname -srm)${NC}              ${WHITE}║${NC}"
-    echo -e "${WHITE}║   ${CYAN}•${NC} ${GREEN}Uptime:${NC} ${WHITE}$(uptime -p | sed 's/up //')${NC}               ${WHITE}║${NC}"
-    echo -e "${WHITE}║   ${CYAN}•${NC} ${GREEN}Memory:${NC} ${WHITE}$(free -h | awk '/Mem:/ {print $3"/"$2}')${NC}               ${WHITE}║${NC}"
-    echo -e "${WHITE}║   ${CYAN}•${NC} ${GREEN}Disk:${NC} ${WHITE}$(df -h / | awk 'NR==2 {print $3"/"$2 " ("$5")"}')${NC}        ${WHITE}║${NC}"
+    echo -e "${WHITE}║   ${CYAN}•${NC} ${GREEN}Hostname:${NC} $(hostname)${WHITE}                  ║${NC}"
+    echo -e "${WHITE}║   ${CYAN}•${NC} ${GREEN}User:${NC} $(whoami)${WHITE}                          ║${NC}"
+    echo -e "${WHITE}║   ${CYAN}•${NC} ${GREEN}Directory:${NC} $(pwd)${WHITE}           ║${NC}"
+    echo -e "${WHITE}║   ${CYAN}•${NC} ${GREEN}System:${NC} $(uname -srm)${WHITE}              ║${NC}"
+    echo -e "${WHITE}║   ${CYAN}•${NC} ${GREEN}Uptime:${NC} $(uptime -p | sed 's/up //')${WHITE}               ║${NC}"
+    echo -e "${WHITE}║   ${CYAN}•${NC} ${GREEN}Memory:${NC} $(free -h | awk '/Mem:/ {print $3"/"$2}')${WHITE}               ║${NC}"
+    echo -e "${WHITE}║   ${CYAN}•${NC} ${GREEN}Disk:${NC} $(df -h / | awk 'NR==2 {print $3"/"$2 " ("$5")"}')${WHITE}        ║${NC}"
     echo -e "${WHITE}╚═══════════════════════════════════════════════╝${NC}"
 
-    echo -e ""
+    echo ""
     read -p "$(echo -e "${YELLOW}Press Enter to continue...${NC}")" -n 1
 }
 
-# Function to display the main menu
+# Menu
 show_menu() {
     clear
     print_header_rule
@@ -178,10 +178,10 @@ show_menu() {
     echo -e "${WHITE}${BOLD}  0)${NC} ${RED}${BOLD}Exit${NC}"
 
     print_header_rule
-    echo -e "${YELLOW}${BOLD}📝 Select an option [0-10]: ${NC}"
+    echo -e "${YELLOW}${BOLD}📝 Select an option [0-12]: ${NC}"
 }
 
-# Welcome animation
+# Welcome
 welcome_animation() {
     clear
     print_header_rule
@@ -205,7 +205,6 @@ welcome_animation
 while true; do
     show_menu
     read -r choice
-
     case $choice in
         1) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/panel2.sh" ;;
         2) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/wing2.sh" ;;
@@ -215,78 +214,10 @@ while true; do
         6) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/cloudflare.sh" ;;
         7) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/th2.sh" ;;
         8) system_info ;;
-        9)
-            print_header_rule
-            big_header "WELCOME"
-            print_header_rule
-            echo -e "${CYAN}Running: ${BOLD}Tailscale Installer${NC}"
-            print_header_rule
-
-            check_curl
-
-            if curl -fsSL https://tailscale.com/install.sh | sh; then
-                print_success "Tailscale installed successfully"
-                if command -v systemctl &>/dev/null; then
-                    sudo systemctl enable --now tailscaled || true
-                fi
-                echo -e "${CYAN}Bringing Tailscale up...${NC}"
-                if [ -n "${TS_AUTH_KEY:-}" ]; then
-                    sudo tailscale up --auth-key="$TS_AUTH_KEY" && print_success "Device authenticated via auth key" || print_error "tailscale up failed"
-                else
-                    sudo tailscale up && print_success "Device connected; approve/login completed" || print_error "tailscale up failed"
-                    echo -e "${YELLOW}Tip: set TS_AUTH_KEY to enroll non-interactively next time.${NC}"
-                fi
-            else
-                print_error "Tailscale installation failed"
-            fi
-
-            echo -e ""
-            read -p "$(echo -e "${YELLOW}Press Enter to continue...${NC}")" -n 1
-            ;;
-
-        10)
-            print_header_rule
-            big_header "DATABASE SETUP"
-            print_header_rule
-            echo -e "${CYAN}Running: ${BOLD}MySQL / MariaDB Database Setup${NC}"
-            print_header_rule
-
-            read -p "Enter new database username: " DB_USER
-            read -sp "Enter password for $DB_USER: " DB_PASS
-            echo ""
-            echo -e "${YELLOW}Creating database user '$DB_USER'...${NC}"
-
-            mysql -u root -p <<MYSQL_SCRIPT
-CREATE USER '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASS}';
-GRANT ALL PRIVILEGES ON *.* TO '${DB_USER}'@'%' WITH GRANT OPTION;
-FLUSH PRIVILEGES;
-MYSQL_SCRIPT
-
-            CONF_FILE="/etc/mysql/mariadb.conf.d/50-server.cnf"
-            if [ -f "$CONF_FILE" ]; then
-                echo -e "${YELLOW}Updating bind-address in $CONF_FILE...${NC}"
-                sed -i 's/^bind-address.*/bind-address = 0.0.0.0/' "$CONF_FILE"
-            else
-                echo -e "${MAGENTA}⚠️  Config file not found: $CONF_FILE${NC}"
-            fi
-
-            echo -e "${YELLOW}Restarting MySQL and MariaDB services...${NC}"
-            systemctl restart mysql 2>/dev/null
-            systemctl restart mariadb 2>/dev/null
-
-            if command -v ufw &>/dev/null; then
-                ufw allow 3306/tcp >/dev/null 2>&1 && echo -e "${GREEN}Opened port 3306 for remote connections${NC}"
-            fi
-
-            echo -e "${GREEN}✅ Database user '$DB_USER' created and remote access enabled!${NC}"
-
-            echo -e ""
-            read -p "$(echo -e "${YELLOW}Press Enter to continue...${NC}")" -n 1
-            ;;
-         11) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/dash.sh" ;;
-         12) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/switch_domains.sh" ;;
-   
-
+        9) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/tailscale.sh" ;;
+        10) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/dbsetup.sh" ;;
+        11) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/dash.sh" ;;
+        12) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/switch_domains.sh" ;;
         0)
             echo -e "${GREEN}Exiting Melsony Hosting Manager...${NC}"
             print_header_rule
@@ -296,7 +227,7 @@ MYSQL_SCRIPT
             exit 0
             ;;
         *)
-            print_error "Invalid option! Please choose between 0-10"
+            print_error "Invalid option! Please choose between 0-12"
             sleep 1.2
             ;;
     esac

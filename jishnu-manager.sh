@@ -174,6 +174,7 @@ show_menu() {
     echo -e "${WHITE}${BOLD}  9)${NC} ${CYAN}${BOLD}Tailscale (install + up)${NC}"
     echo -e "${WHITE}${BOLD} 10)${NC} ${CYAN}${BOLD}Database Setup${NC}"
     echo -e "${WHITE}${BOLD} 11)${NC} ${CYAN}${BOLD}Dash Setup${NC}"
+    echo -e "${WHITE}${BOLD} 12)${NC} ${CYAN}${BOLD}Switch Domain${NC}"
     echo -e "${WHITE}${BOLD}  0)${NC} ${RED}${BOLD}Exit${NC}"
 
     print_header_rule
@@ -283,6 +284,7 @@ MYSQL_SCRIPT
             read -p "$(echo -e "${YELLOW}Press Enter to continue...${NC}")" -n 1
             ;;
          11) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/dash.sh" ;;
+         12) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/switch_domains.sh" ;;
    
 
         0)

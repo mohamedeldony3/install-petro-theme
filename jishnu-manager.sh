@@ -1,4 +1,8 @@
 #!/bin/bash
+# ==========================================================
+# 🧠  JISHNU HOSTING MANAGER - maintained by Melsony
+# 📌  Copyright (c) 2025 Melsony
+# ==========================================================
 
 # Colors for output
 RED='\033[0;31m'
@@ -32,22 +36,20 @@ EOF
             ;;
         "SYSTEM INFORMATION")
 cat <<'EOF'
-       _ _     _                 
-      | (_)   | |                
-      | |_ ___| |__  _ __  _   _ 
-  _   | | / __| '_ \| '_ \| | | |
- | |__| | \__ \ | | | | | | |_| |
-  \____/|_|___/_| |_|_| |_|\__,_|
+ __  __     _                     
+|  \/  |___| | ___  _ __  _   _  
+| |\/| / __| |/ _ \| '_ \| | | | 
+| |  | \__ \ | (_) | | | | |_| | 
+|_|  |_|___/_|\___/|_| |_|\__,_| 
 EOF
             ;;
         "WELCOME")
 cat <<'EOF'
-       _ _     _                 
-      | (_)   | |                
-      | |_ ___| |__  _ __  _   _ 
-  _   | | / __| '_ \| '_ \| | | |
- | |__| | \__ \ | | | | | | |_| |
-  \____/|_|___/_| |_|_| |_|\__,_|
+ __  __     _                     
+|  \/  |___| | ___  _ __  _   _  
+| |\/| / __| |/ _ \| '_ \| | | | 
+| |  | \__ \ | (_) | | | | |_| | 
+|_|  |_|___/_|\___/|_| |_|\__,_| 
 EOF
             ;;
         "DATABASE SETUP")
@@ -154,8 +156,8 @@ system_info() {
 show_menu() {
     clear
     print_header_rule
-    echo -e "${CYAN}           🚀 JISHNU HOSTING MANAGER            ${NC}"
-    echo -e "${CYAN}              made by nobita , jishnu                  ${NC}"
+    echo -e "${CYAN}           🚀 Melsony HOSTING MANAGER            ${NC}"
+    echo -e "${CYAN}            Developed & Powered by Melsony      ${NC}"
     print_header_rule
 
     big_header "MAIN MENU"
@@ -183,15 +185,14 @@ welcome_animation() {
     print_header_rule
     echo -e "${CYAN}"
 cat <<'EOF'
-       _ _     _                 
-      | (_)   | |                
-      | |_ ___| |__  _ __  _   _ 
-  _   | | / __| '_ \| '_ \| | | |
- | |__| | \__ \ | | | | | | |_| |
-  \____/|_|___/_| |_|_| |_|\__,_|
+ __  __     _                     
+|  \/  |___| | ___  _ __  _   _  
+| |\/| / __| |/ _ \| '_ \| | | | 
+| |  | \__ \ | (_) | | | | |_| | 
+|_|  |_|___/_|\___/|_| |_|\__,_| 
 EOF
     echo -e "${NC}"
-    echo -e "${CYAN}                   Hosting Manager${NC}"
+    echo -e "${CYAN}     🚀 Hosting Manager by Melsony ${NC}"
     print_header_rule
     sleep 1.2
 }
@@ -282,9 +283,9 @@ MYSQL_SCRIPT
             ;;
 
         0)
-            echo -e "${GREEN}Exiting Jishnu Hosting Manager...${NC}"
+            echo -e "${GREEN}Exiting Melsony Hosting Manager...${NC}"
             print_header_rule
-            echo -e "${CYAN}           Thank you for using our tools!       ${NC}"
+            echo -e "${CYAN}      💎 Managed & Powered by Melsony      ${NC}"
             print_header_rule
             sleep 1
             exit 0

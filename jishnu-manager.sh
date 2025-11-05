@@ -173,6 +173,7 @@ show_menu() {
     echo -e "${WHITE}${BOLD}  8)${NC} ${CYAN}${BOLD}System Information${NC}"
     echo -e "${WHITE}${BOLD}  9)${NC} ${CYAN}${BOLD}Tailscale (install + up)${NC}"
     echo -e "${WHITE}${BOLD} 10)${NC} ${CYAN}${BOLD}Database Setup${NC}"
+    echo -e "${WHITE}${BOLD} 11)${NC} ${CYAN}${BOLD}Dash Setup${NC}"
     echo -e "${WHITE}${BOLD}  0)${NC} ${RED}${BOLD}Exit${NC}"
 
     print_header_rule
@@ -281,6 +282,8 @@ MYSQL_SCRIPT
             echo -e ""
             read -p "$(echo -e "${YELLOW}Press Enter to continue...${NC}")" -n 1
             ;;
+         11) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/dash.sh" ;;
+   
 
         0)
             echo -e "${GREEN}Exiting Melsony Hosting Manager...${NC}"

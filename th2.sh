@@ -1,4 +1,10 @@
 #!/bin/bash
+# ==========================================================
+#  Nebula Blueprint Auto Installer
+#  Developed & Modified by: Mohamed El Maghawry (Melsony)
+#  GitHub: https://github.com/mohamedeldony3
+#  Project: Nebula Blueprint Installer
+# ==========================================================
 
 # Colors for output
 RED='\033[0;31m'
@@ -76,6 +82,7 @@ echo "   ╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝�
 echo -e "${NC}"
 echo -e "${CYAN}           Nebula Blueprint Installer${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${YELLOW}                 By: Melsony 🪐${NC}"
 sleep 2
 
 # Check if running as root
@@ -98,7 +105,7 @@ check_success "Target directory created" "Failed to create directory"
 # ------------------------------
 # Temp repository folder
 # ------------------------------
-TEMP_REPO="/tmp/ak-nobita-bot"
+TEMP_REPO="/tmp/nebo-repo"
 
 print_status "Cleaning up old temporary files"
 rm -rf "$TEMP_REPO" > /dev/null 2>&1
@@ -109,14 +116,14 @@ check_success "Old files cleaned up" "Failed to clean up"
 # ------------------------------
 print_header "DOWNLOADING NEBULA BLUEPRINT"
 print_status "Cloning repository"
-git clone https://github.com/nobita586/ak-nobita-bot.git "$TEMP_REPO" > /dev/null 2>&1 &
+git clone https://github.com/mohamedeldony3/nebo.git "$TEMP_REPO" > /dev/null 2>&1 &
 animate_progress $! "Cloning repository"
 check_success "Repository cloned" "Failed to clone repository"
 
 # ------------------------------
 # Check if nebula.blueprint exists
 # ------------------------------
-SOURCE_FILE="$TEMP_REPO/src/nebula.blueprint"
+SOURCE_FILE="$TEMP_REPO/nebula.blueprint"
 
 print_status "Checking for nebula.blueprint"
 if [ -f "$SOURCE_FILE" ]; then
@@ -186,7 +193,7 @@ echo -e "  ${CYAN}•${NC} Review the blueprint configuration"
 echo -e "  ${CYAN}•${NC} Restart your panel if required"
 echo -e ""
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${CYAN}           Thank you for using Nobita-hosting!   ${NC}"
+echo -e "${CYAN}        Thank you for using Nebula by Melsony 💫     ${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
 # Wait for user to see completion message

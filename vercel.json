@@ -1,0 +1,11 @@
+{
+  "routes": [
+    {
+      "src": "/jishnu-manager\\.sh",
+      "headers": {
+        "WWW-Authenticate": "Basic realm=\"Restricted Area\""
+      },
+      "dest": "/api/auth.js"
+    }
+  ]
+}

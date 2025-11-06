@@ -174,8 +174,9 @@ show_menu() {
     echo -e "${WHITE}${BOLD}  9)${NC} ${CYAN}${BOLD}Tailscale (install + up)${NC}"
     echo -e "${WHITE}${BOLD} 10)${NC} ${CYAN}${BOLD}Database Setup${NC}"
     echo -e "${WHITE}${BOLD} 11)${NC} ${CYAN}${BOLD}Dash Setup${NC}"
-    echo -e "${WHITE}${BOLD} 12)${NC} ${CYAN}${BOLD}Switch Domain${NC}"
-    echo -e "${WHITE}${BOLD}  0)${NC} ${RED}${BOLD}Exit${NC}"
+    echo -e "${WHITE}${BOLD} 12)${NC} ${CYAN}${BOLD}Theme Dash(Fonixe) Domain${NC}"
+    echo -e "${WHITE}${BOLD} 13)${NC} ${CYAN}${BOLD}Switch Domain${NC}"
+        echo -e "${WHITE}${BOLD}  0)${NC} ${RED}${BOLD}Exit${NC}"
 
     print_header_rule
     echo -e "${YELLOW}${BOLD}📝 Select an option [0-12]: ${NC}"
@@ -217,7 +218,8 @@ while true; do
         9) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/tailscale.sh" ;;
         10) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/dbsetup.sh" ;;
         11) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/dash.sh" ;;
-        12) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/switch_domains.sh" ;;
+        12) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/theme-dash.sh" ;;
+        13) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/switch_domains.sh" ;;
         0)
             echo -e "${GREEN}Exiting Melsony Hosting Manager...${NC}"
             print_header_rule

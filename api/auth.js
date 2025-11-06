@@ -6,7 +6,7 @@ export default function handler(req, res) {
 
   // اسم المستخدم وكلمة المرور (عدّلهم زي ما تحب)
   const username = "elsony";
-  const password = "010614";
+  const password = "01061";
 
   // لو مفيش مصادقة، نرجع طلب تسجيل الدخول
   if (!auth) {

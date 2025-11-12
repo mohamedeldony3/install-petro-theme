@@ -5,8 +5,8 @@ export default function handler(req, res) {
   const auth = req.headers.authorization;
 
   // اسم المستخدم وكلمة المرور (عدّلهم زي ما تحب)
-  const username = "elsony";
-  const password = "01061";
+  const username = "admin";
+  const password = "12345";
 
   // لو مفيش مصادقة، نرجع طلب تسجيل الدخول
   if (!auth) {

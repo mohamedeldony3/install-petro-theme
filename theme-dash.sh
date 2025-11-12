@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-#         🦅 Melsony | Phoenix Theme Installer (Public)
+#         🦅 Melsony | Phoenix Theme Installer (Auto)
 # ============================================================
 
 set -e
@@ -22,11 +22,31 @@ echo "╚═══════════════════════�
 echo -e "${NC}"
 
 # ------------- 📦 Requirements -------------
-echo -e "${BLUE}🔍 Checking required packages...${NC}"
-for pkg in curl unzip php; do
+echo -e "${BLUE}🔍 Checking and installing required packages...${NC}"
+
+REQUIRED_PKGS=("curl" "unzip" "php" "file")
+
+# Detect package manager
+if command -v apt-get &> /dev/null; then
+    PKG_MANAGER="apt-get"
+elif command -v yum &> /dev/null; then
+    PKG_MANAGER="yum"
+else
+    echo -e "${RED}❌ No supported package manager found (apt or yum).${NC}"
+    exit 1
+fi
+
+# Install missing packages
+for pkg in "${REQUIRED_PKGS[@]}"; do
     if ! command -v $pkg &> /dev/null; then
         echo -e "${YELLOW}📦 Installing: $pkg${NC}"
-        apt-get install -y $pkg >/dev/null 2>&1 || yum install -y $pkg >/dev/null 2>&1
+        if [ "$PKG_MANAGER" = "apt-get" ]; then
+            apt-get update -y >/dev/null 2>&1
+        fi
+        $PKG_MANAGER install -y $pkg >/dev/null 2>&1 || {
+            echo -e "${RED}❌ Failed to install $pkg.${NC}"
+            exit 1
+        }
     fi
 done
 
@@ -34,6 +54,9 @@ done
 INSTALL_PATH="/var/www/ctrlpanel"
 ZIP_FILE="$INSTALL_PATH/dash-theme.zip"
 ZIP_URL="https://raw.githubusercontent.com/mohamedeldony3/mohamedeldony3/main/dash-theme.zip"
+
+# Create directory if not exists
+mkdir -p "$INSTALL_PATH"
 
 # ------------- ⬇️ Download -------------
 echo -e "${BLUE}⬇️  Downloading Phoenix theme...${NC}"
@@ -54,17 +77,17 @@ unzip -o "$ZIP_FILE" -d "$INSTALL_PATH" >/dev/null
 
 # ------------- 🔧 Permissions -------------
 echo -e "${BLUE}🔧 Setting file permissions...${NC}"
-chown -R www-data:www-data "$INSTALL_PATH"
-chmod -R 755 "$INSTALL_PATH/storage/"* "$INSTALL_PATH/bootstrap/cache/"
+chown -R www-data:www-data "$INSTALL_PATH" 2>/dev/null || true
+chmod -R 755 "$INSTALL_PATH/storage/"* "$INSTALL_PATH/bootstrap/cache/" 2>/dev/null || true
 
 # ------------- ⚙️ Migrations -------------
 echo -e "${BLUE}⚙️  Running Laravel migrations...${NC}"
-cd "$INSTALL_PATH"
-php artisan migrate --force
+cd "$INSTALL_PATH" || exit 1
+php artisan migrate --force || echo -e "${YELLOW}⚠️ Migration skipped (Laravel not found).${NC}"
 
 # ------------- 🧹 Clear Cache -------------
 echo -e "${BLUE}🧹 Clearing Laravel cache...${NC}"
-php artisan optimize:clear
+php artisan optimize:clear || echo -e "${YELLOW}⚠️ Cache clear skipped (Laravel not found).${NC}"
 
 # ------------- 🧼 Cleanup -------------
 echo -e "${BLUE}🧼 Cleaning up...${NC}"
@@ -73,8 +96,8 @@ rm -f "$ZIP_FILE"
 # ------------- ✅ Done -------------
 echo -e "${GREEN}"
 echo "╔═══════════════════════════════════════════════╗"
-echo "║       🎉 Phoenix Theme Installed             ║"
-echo "║          Change theme in admin panel         ║"
-echo "║          Theme name: ${YELLOW}Phoenix${GREEN}                   ║"
+echo "║       🎉 Phoenix Theme Installed Successfully  ║"
+echo "║          Change theme in admin panel          ║"
+echo "║          Theme name: ${YELLOW}Phoenix${GREEN}                 ║"
 echo "╚═══════════════════════════════════════════════╝"
 echo -e "${NC}"

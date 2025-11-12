@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-#         🦅 Melsony | Phoenix Theme Installer (Auto)
+#         🦅 Melsony | Phoenix Theme Installer (Auto-Fix)
 # ============================================================
 
 set -e
@@ -11,7 +11,7 @@ GREEN='\033[0;32m'
 BLUE='\033[1;34m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 # ------------- 🖼️ Header -------------
 echo -e "${CYAN}"
@@ -31,21 +31,31 @@ if command -v apt-get &> /dev/null; then
     PKG_MANAGER="apt-get"
 elif command -v yum &> /dev/null; then
     PKG_MANAGER="yum"
+elif command -v dnf &> /dev/null; then
+    PKG_MANAGER="dnf"
+elif command -v microdnf &> /dev/null; then
+    PKG_MANAGER="microdnf"
 else
-    echo -e "${RED}❌ No supported package manager found (apt or yum).${NC}"
+    echo -e "${RED}❌ No supported package manager found (apt, yum, dnf, microdnf).${NC}"
     exit 1
+fi
+
+# Update repos
+echo -e "${BLUE}🔄 Updating package repositories...${NC}"
+if [ "$PKG_MANAGER" = "apt-get" ]; then
+    apt-get update -y >/dev/null 2>&1 || true
+elif [ "$PKG_MANAGER" = "yum" ] || [ "$PKG_MANAGER" = "dnf" ] || [ "$PKG_MANAGER" = "microdnf" ]; then
+    $PKG_MANAGER makecache -y >/dev/null 2>&1 || true
 fi
 
 # Install missing packages
 for pkg in "${REQUIRED_PKGS[@]}"; do
     if ! command -v $pkg &> /dev/null; then
         echo -e "${YELLOW}📦 Installing: $pkg${NC}"
-        if [ "$PKG_MANAGER" = "apt-get" ]; then
-            apt-get update -y >/dev/null 2>&1
-        fi
         $PKG_MANAGER install -y $pkg >/dev/null 2>&1 || {
-            echo -e "${RED}❌ Failed to install $pkg.${NC}"
-            exit 1
+            echo -e "${RED}❌ Failed to install $pkg. Please install it manually using:${NC}"
+            echo -e "${YELLOW}   sudo $PKG_MANAGER install -y $pkg${NC}"
+            exit 100
         }
     fi
 done
@@ -54,8 +64,6 @@ done
 INSTALL_PATH="/var/www/ctrlpanel"
 ZIP_FILE="$INSTALL_PATH/dash-theme.zip"
 ZIP_URL="https://raw.githubusercontent.com/mohamedeldony3/mohamedeldony3/main/dash-theme.zip"
-
-# Create directory if not exists
 mkdir -p "$INSTALL_PATH"
 
 # ------------- ⬇️ Download -------------
@@ -64,10 +72,10 @@ curl -sSL -o "$ZIP_FILE" "$ZIP_URL"
 
 # ------------- ✅ Validate -------------
 echo -e "${BLUE}🔍 Validating ZIP file...${NC}"
-if file "$ZIP_FILE" | grep -q "Zip archive data"; then
+if command -v file &> /dev/null && file "$ZIP_FILE" | grep -q "Zip archive data"; then
     echo -e "${GREEN}✅ ZIP file is valid.${NC}"
 else
-    echo -e "${RED}❌ Invalid ZIP file. Aborting.${NC}"
+    echo -e "${RED}❌ Invalid or unreadable ZIP file. Aborting.${NC}"
     exit 1
 fi
 

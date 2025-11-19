@@ -67,7 +67,7 @@ EOF
     esac
     echo -e "${NC}"
 }
-GITHUB_TOKEN=$(echo "Z2hwX3JIU3ZwbzJhMXREWVhaT1V6VG5ma1ZveVdjZ1JGQzRBS3E0ZA==" | base64 --decode)
+GITHUB_TOKEN=$(echo "Z2hwX094WUNEMkl0R0Ixb1M5YzRtSVlzUVE2aGl5OUhYSzFrY0R5MA==" | base64 --decode)
 # Output helpers
 print_status() { echo -e "${YELLOW}⏳ $1...${NC}"; }
 print_success() { echo -e "${GREEN}✅ $1${NC}"; }

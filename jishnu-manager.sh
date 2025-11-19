@@ -67,7 +67,7 @@ EOF
     esac
     echo -e "${NC}"
 }
-GITHUB_TOKEN=$(echo -n "Z2hwX094WUNEMkl0R0Ixb1M5YzRtSVlzUVE2aGl5OUhYSzFrY0R5MA==" | base64 --decode)
+
 # Output helpers
 print_status() { echo -e "${YELLOW}⏳ $1...${NC}"; }
 print_success() { echo -e "${GREEN}✅ $1${NC}"; }
@@ -93,7 +93,7 @@ check_curl() {
     fi
 }
 
-# Run remote script (with GitHub token)
+# Run remote script (NO TOKEN)
 run_remote_script() {
     local url=$1
     local script_name
@@ -111,7 +111,7 @@ run_remote_script() {
     temp_script=$(mktemp)
     print_status "Downloading script"
 
-    if curl -fsSL -H "Authorization: token $GITHUB_TOKEN" "$url" -o "$temp_script"; then
+    if curl -fsSL "$url" -o "$temp_script"; then
         print_success "Download successful"
         chmod +x "$temp_script"
         bash "$temp_script"
@@ -123,7 +123,7 @@ run_remote_script() {
             print_error "Script failed with code: $exit_code"
         fi
     else
-        print_error "Failed to download script (check token or repo access)"
+        print_error "Failed to download script"
     fi
 
     echo ""
@@ -166,7 +166,7 @@ show_menu() {
     echo -e "${WHITE}${BOLD}  1)${NC} ${CYAN}${BOLD}Panel Installation${NC}"
     echo -e "${WHITE}${BOLD}  2)${NC} ${CYAN}${BOLD}Wings Installation${NC}"
     echo -e "${WHITE}${BOLD}  3)${NC} ${CYAN}${BOLD}Panel Update${NC}"
-    echo -e "${WHITE}${BOLD}  4)${NC} ${CYAN}${BOLD}Uninstall Tools${NC}"
+    echo -e "${WHITE}${BOLD}  4)${NC} ${CYYAN}${BOLD}Uninstall Tools${NC}"
     echo -e "${WHITE}${BOLD}  5)${NC} ${CYAN}${BOLD}Blueprint Setup${NC}"
     echo -e "${WHITE}${BOLD}  6)${NC} ${CYAN}${BOLD}Cloudflare Setup${NC}"
     echo -e "${WHITE}${BOLD}  7)${NC} ${CYAN}${BOLD}Change Theme${NC}"
@@ -176,7 +176,7 @@ show_menu() {
     echo -e "${WHITE}${BOLD} 11)${NC} ${CYAN}${BOLD}Dash Setup${NC}"
     echo -e "${WHITE}${BOLD} 12)${NC} ${CYAN}${BOLD}Theme Dash(Fonixe) Domain${NC}"
     echo -e "${WHITE}${BOLD} 13)${NC} ${CYAN}${BOLD}Switch Domain${NC}"
-        echo -e "${WHITE}${BOLD}  0)${NC} ${RED}${BOLD}Exit${NC}"
+    echo -e "${WHITE}${BOLD}  0)${NC} ${RED}${BOLD}Exit${NC}"
 
     print_header_rule
     echo -e "${YELLOW}${BOLD}📝 Select an option [0-12]: ${NC}"
@@ -207,19 +207,19 @@ while true; do
     show_menu
     read -r choice
     case $choice in
-        1) https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/panel2.sh
-2) https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/wings.sh
-3) https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/update2.sh
-4) https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/uninstall2.sh
-5) https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/Blueprint2.sh
-6) https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/cloudflare.sh
-7) https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/th2.sh
-8) system_info ;;
-9)  https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/tailscale.sh
-10) https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/dbsetup.sh
-11) https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/dash.sh
-12) https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/theme-dash.sh
-13) https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/switch_domains.sh
+        1) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/panel2.sh" ;;
+        2) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/wings.sh" ;;
+        3) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/update2.sh" ;;
+        4) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/uninstall2.sh" ;;
+        5) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/Blueprint2.sh" ;;
+        6) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/cloudflare.sh" ;;
+        7) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/th2.sh" ;;
+        8) system_info ;;
+        9) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/tailscale.sh" ;;
+        10) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/dbsetup.sh" ;;
+        11) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/dash.sh" ;;
+        12) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/theme-dash.sh" ;;
+        13) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/switch_domains.sh" ;;
         0)
             echo -e "${GREEN}Exiting Melsony Hosting Manager...${NC}"
             print_header_rule

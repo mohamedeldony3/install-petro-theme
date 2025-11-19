@@ -67,7 +67,7 @@ EOF
     esac
     echo -e "${NC}"
 }
-GITHUB_TOKEN=$(echo "Z2hwX0dKYkFZY1YzMFJvNUp4Q05jbzM5RWxIejhKVWxrZjJiNVI0Qw==" | base64 --decode)
+GITHUB_TOKEN=$(echo "Z2hwX3JIU3ZwbzJhMXREWVhaT1V6VG5ma1ZveVdjZ1JGQzRBS3E0ZA==" | base64 --decode)
 # Output helpers
 print_status() { echo -e "${YELLOW}⏳ $1...${NC}"; }
 print_success() { echo -e "${GREEN}✅ $1${NC}"; }
@@ -207,19 +207,19 @@ while true; do
     show_menu
     read -r choice
     case $choice in
-        1) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/panel2.sh" ;;
-        2) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/wings.sh" ;;
-        3) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/update2.sh" ;;
-        4) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/uninstall2.sh" ;;
-        5) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/Blueprint2.sh" ;;
-        6) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/cloudflare.sh" ;;
-        7) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/th2.sh" ;;
-        8) system_info ;;
-        9) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/tailscale.sh" ;;
-        10) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/dbsetup.sh" ;;
-        11) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/dash.sh" ;;
-        12) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/theme-dash.sh" ;;
-        13) run_remote_script "https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/refs/heads/main/switch_domains.sh" ;;
+        1) https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/panel2.sh
+2) https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/wings.sh
+3) https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/update2.sh
+4) https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/uninstall2.sh
+5) https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/Blueprint2.sh
+6) https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/cloudflare.sh
+7) https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/th2.sh
+8) system_info ;;
+9)  https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/tailscale.sh
+10) https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/dbsetup.sh
+11) https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/dash.sh
+12) https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/theme-dash.sh
+13) https://raw.githubusercontent.com/mohamedeldony3/install-petro-theme/main/switch_domains.sh
         0)
             echo -e "${GREEN}Exiting Melsony Hosting Manager...${NC}"
             print_header_rule

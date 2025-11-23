@@ -86,6 +86,11 @@ log "[8] تثبيت حزم Composer..."
 # ============================
 COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader
 
+log "[8.1] إنشاء ملف .env..."
+cp .env.example .env || true
+
+log "[8.2] إنشاء مفتاح التشفير..."
+php artisan key:generate || true
 # ============================
 log "[9] تفعيل storage..."
 # ============================

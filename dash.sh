@@ -11,20 +11,26 @@ echo "[2] تثبيت المتطلبات..."
 apt install -y software-properties-common curl apt-transport-https ca-certificates gnupg lsb-release
 
 echo "[3] إعداد مستودعات PHP و Redis و MariaDB..."
+
+# PHP repo
 wget -q -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
 
+# Redis repo (إصلاح التوقف)
+rm -f /usr/share/keyrings/redis-archive-keyring.gpg
 curl -fsSL https://packages.redis.io/gpg \
  | gpg --dearmor --yes --batch --output /usr/share/keyrings/redis-archive-keyring.gpg
 
 echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" \
  | tee /etc/apt/sources.list.d/redis.list >/dev/null
 
+# MariaDB repo
 curl -LsS https://r.mariadb.com/downloads/mariadb_repo_setup | bash
 
 apt update -y
 
 echo "[4] تثبيت PHP + Nginx + MariaDB..."
-apt install -y php8.3 php8.3-{common,cli,gd,mysql,mbstring,bcmath,xml,fpm,curl,zip,intl,redis} nginx mariadb-server git redis-server
+apt install -y php8.3 php8.3-{common,cli,gd,mysql,mbstring,bcmath,xml,fpm,curl,zip,intl,redis} \
+ nginx mariadb-server git redis-server
 
 echo "[5] تثبيت Composer..."
 curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
@@ -61,9 +67,11 @@ server {
 
     root /var/www/ctrlpanel/public;
     index index.php;
+
     location / {
         try_files \$uri \$uri/ /index.php?\$query_string;
     }
+
     location ~ \.php\$ {
         fastcgi_pass unix:/run/php/php8.3-fpm.sock;
         include fastcgi_params;
@@ -80,7 +88,7 @@ echo "[11] تثبيت SSL..."
 apt install -y certbot python3-certbot-nginx
 certbot --nginx -d $DOMAIN --non-interactive --agree-tos --email admin@$DOMAIN --redirect || true
 
-echo "[12] تشغيل خدمات..."
+echo "[12] تشغيل الخدمات..."
 systemctl restart nginx php8.3-fpm redis-server
 
 echo "[✔] تم التثبيت بنجاح!"

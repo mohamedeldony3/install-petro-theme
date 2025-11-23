@@ -1,63 +1,102 @@
 #!/bin/bash
 set -euo pipefail
+
 export DEBIAN_FRONTEND=noninteractive
 
-echo "[1] Updating system..."
-apt update -y
-apt upgrade -y
+# ============================
+echo "[0] تنظيف اللوج والملفات..."
+# ============================
+rm -f /root/dash.log
+touch /root/dash.log
 
-echo "[2] Installing dependencies..."
-apt install -y software-properties-common curl apt-transport-https ca-certificates gnupg lsb-release
+log() {
+    echo -e "$1" | tee -a /root/dash.log
+}
 
-echo "[3] Adding PHP repository (Ondrej)..."
-LC_ALL=C.UTF-8 add-apt-repository ppa:ondrej/php -y
-
-echo "[+] Updating..."
-apt update -y
-
-echo "[4] Installing PHP + Nginx + MariaDB..."
-apt install -y php8.3 php8.3-{common,cli,gd,mysql,mbstring,bcmath,xml,fpm,curl,zip,intl,redis} \
- nginx mariadb-server git redis-server
-
-echo "[5] Installing Composer..."
-curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-
-echo "[6] Cloning CtrlPanel..."
-mkdir -p /var/www/ctrlpanel
-cd /var/www/ctrlpanel
-git clone --depth=1 https://github.com/Ctrlpanel-gg/panel.git ./ || true
-
-echo "[7] Database setup..."
+DOMAIN="{{DOMAIN}}"
 DB_PASSWORD="{{DB_PASSWORD}}"
+INSTALL_DIR="/var/www/ctrlpanel"
 DB_USER="ctrlpaneluser"
 DB_NAME="ctrlpanel"
 
-mysql -u root <<EOF
-DROP DATABASE IF EXISTS $DB_NAME;
-CREATE DATABASE $DB_NAME;
-CREATE USER IF NOT EXISTS '$DB_USER'@'127.0.0.1' IDENTIFIED BY '$DB_PASSWORD';
-GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'127.0.0.1';
-FLUSH PRIVILEGES;
-EOF
+# ============================
+log "[1] تحديث النظام..."
+# ============================
+apt update -y && apt upgrade -y
 
-echo "[8] Composer install..."
+# ============================
+log "[2] إزالة مستودعات PHP القديمة (Sury)..."
+# ============================
+rm -f /etc/apt/sources.list.d/php.list
+rm -f /etc/apt/trusted.gpg.d/php.gpg
+rm -f /etc/apt/sources.list.d/sury*
+apt update -y || true
+
+# ============================
+log "[3] إضافة مستودع PHP الرسمي (Ondrej/php)..."
+# ============================
+apt install -y software-properties-common ca-certificates curl gnupg lsb-release
+LC_ALL=C.UTF-8 add-apt-repository ppa:ondrej/php -y
+apt update -y
+
+# ============================
+log "[4] تثبيت PHP + Nginx + MariaDB + Redis..."
+# ============================
+apt install -y \
+  php8.3 php8.3-{common,cli,gd,mysql,mbstring,bcmath,xml,fpm,curl,zip,intl} \
+  nginx mariadb-server redis-server git
+
+systemctl enable --now redis-server
+
+# ============================
+log "[5] تثبيت Composer..."
+# ============================
+curl -sS https://getcomposer.org/installer \
+ | php -- --install-dir=/usr/local/bin --filename=composer
+
+# ============================
+log "[6] تنزيل ملفات CtrlPanel..."
+# ============================
+rm -rf $INSTALL_DIR
+mkdir -p $INSTALL_DIR
+git clone https://github.com/Ctrlpanel-gg/panel.git $INSTALL_DIR
+
+cd $INSTALL_DIR
+
+# ============================
+log "[7] إعداد قاعدة البيانات..."
+# ============================
+mysql -u root -e "DROP DATABASE IF EXISTS $DB_NAME;"
+mysql -u root -e "CREATE DATABASE $DB_NAME;"
+mysql -u root -e "CREATE USER IF NOT EXISTS '$DB_USER'@'127.0.0.1' IDENTIFIED BY '$DB_PASSWORD';"
+mysql -u root -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'127.0.0.1';"
+mysql -u root -e "FLUSH PRIVILEGES;"
+
+# ============================
+log "[8] تثبيت حزم Composer..."
+# ============================
 COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader
 
-echo "[9] Linking storage..."
+# ============================
+log "[9] تفعيل storage..."
+# ============================
 php artisan storage:link
 
-echo "[10] Configuring Nginx..."
-DOMAIN="{{DOMAIN}}"
-
+# ============================
+log "[10] إعداد Nginx..."
+# ============================
 cat > /etc/nginx/sites-available/ctrlpanel.conf <<EOF
 server {
     listen 80;
     server_name $DOMAIN;
-    root /var/www/ctrlpanel/public;
+
+    root $INSTALL_DIR/public;
     index index.php;
+
     location / {
         try_files \$uri \$uri/ /index.php?\$query_string;
     }
+
     location ~ \.php\$ {
         fastcgi_pass unix:/run/php/php8.3-fpm.sock;
         include fastcgi_params;
@@ -68,14 +107,25 @@ EOF
 
 ln -sf /etc/nginx/sites-available/ctrlpanel.conf /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
+
 nginx -t && systemctl restart nginx
 
-echo "[11] SSL setup..."
+# ============================
+log "[11] تثبيت SSL..."
+# ============================
 apt install -y certbot python3-certbot-nginx
-certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos \
- --email admin@$DOMAIN --redirect || true
+certbot --nginx -d $DOMAIN --non-interactive --agree-tos --email admin@$DOMAIN --redirect || true
 
-echo "[12] Restarting services..."
-systemctl restart nginx php8.3-fpm redis-server
+# ============================
+log "[12] تشغيل الخدمات..."
+# ============================
+systemctl restart nginx php8.3-fpm redis-server mariadb
 
-echo "[✔] Installation completed successfully!"
+# ============================
+log "[✔] تم التثبيت بنجاح!"
+log "الرابط: https://$DOMAIN/installer"
+
+# حذف السكربت نفسه
+rm -f dash.sh
+
+exit 0

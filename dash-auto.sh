@@ -48,6 +48,8 @@ apt install -y \
 
 systemctl enable --now redis-server
 
+apt install -y php8.3-redis
+systemctl restart php8.3-fpm
 # ============================
 log "[5] تثبيت Composer..."
 # ============================

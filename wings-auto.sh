@@ -1,94 +1,78 @@
-#!/bin/bash
 set -euo pipefail
-
+PANEL_URL="{{PANEL_URL}}"
+NODE_FQDN="{{NODE_FQDN}}"
+ADMIN_EMAIL="{{ADMIN_EMAIL}}"
+WINGS_TOKEN="{{WINGS_TOKEN}}"
+NODE_ID="{{NODE_ID}}"
+if [[ $EUID -ne 0 ]]; then
+  echo "[!] يجب تشغيل السكربت كـ root."
+  exit 1
+fi
+echo "[+] بدء التثبيت..."
+echo "Panel: $PANEL_URL"
+echo "FQDN : $NODE_FQDN"
+echo "Admin: $ADMIN_EMAIL"
+echo "Node : $NODE_ID"
 export DEBIAN_FRONTEND=noninteractive
-
-echo "[1] تحديث النظام..."
-apt update -y
-apt upgrade -y
-
-echo "[2] تثبيت المتطلبات..."
-apt install -y software-properties-common curl apt-transport-https ca-certificates gnupg lsb-release
-
-echo "[3] إعداد مستودعات PHP و Redis و MariaDB..."
-
-# PHP repo
-wget -q -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
-
-# Redis repo (إصلاح التوقف)
-rm -f /usr/share/keyrings/redis-archive-keyring.gpg
-curl -fsSL https://packages.redis.io/gpg \
- | gpg --dearmor --yes --batch --output /usr/share/keyrings/redis-archive-keyring.gpg
-
-echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" \
- | tee /etc/apt/sources.list.d/redis.list >/dev/null
-
-# MariaDB repo
-curl -LsS https://r.mariadb.com/downloads/mariadb_repo_setup | bash
-
-apt update -y
-
-echo "[4] تثبيت PHP + Nginx + MariaDB..."
-apt install -y php8.3 php8.3-{common,cli,gd,mysql,mbstring,bcmath,xml,fpm,curl,zip,intl,redis} \
- nginx mariadb-server git redis-server
-
-echo "[5] تثبيت Composer..."
-curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-
-echo "[6] تنزيل CtrlPanel..."
-mkdir -p /var/www/ctrlpanel
-cd /var/www/ctrlpanel
-git clone https://github.com/Ctrlpanel-gg/panel.git ./ || true
-
-echo "[7] إعداد قاعدة البيانات..."
-DB_PASSWORD="{{DB_PASSWORD}}"
-DB_USER="ctrlpaneluser"
-DB_NAME="ctrlpanel"
-
-mysql -u root -e "DROP DATABASE IF EXISTS $DB_NAME;"
-mysql -u root -e "CREATE DATABASE $DB_NAME;"
-mysql -u root -e "CREATE USER IF NOT EXISTS '$DB_USER'@'127.0.0.1' IDENTIFIED BY '$DB_PASSWORD';"
-mysql -u root -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'127.0.0.1';"
-mysql -u root -e "FLUSH PRIVILEGES;"
-
-echo "[8] تثبيت Composer Packages..."
-COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader
-
-echo "[9] تفعيل رابط التخزين..."
-php artisan storage:link
-
-echo "[10] إعداد Nginx..."
-DOMAIN="{{DOMAIN}}"
-
-cat > /etc/nginx/sites-available/ctrlpanel.conf <<EOF
-server {
-    listen 80;
-    server_name $DOMAIN;
-
-    root /var/www/ctrlpanel/public;
-    index index.php;
-
-    location / {
-        try_files \$uri \$uri/ /index.php?\$query_string;
-    }
-
-    location ~ \.php\$ {
-        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
-        include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-    }
-}
+apt-get update -y
+apt-get install -y ca-certificates curl gnupg lsb-release ufw jq apt-transport-https software-properties-common
+echo "[+] Installing Docker..."
+curl -fsSL https://get.docker.com | CHANNEL=stable bash
+systemctl enable --now docker
+mkdir -p /var/lib/docker/tmp
+chmod 1777 /var/lib/docker/tmp
+docker network create pterodactyl_nw >/dev/null 2>&1 || true
+echo "[+] Downloading Wings..."
+mkdir -p /etc/pterodactyl
+ARCH="$(uname -m)"
+case "$ARCH" in
+  x86_64|amd64) BINARCH="amd64" ;;
+  aarch64|arm64) BINARCH="arm64" ;;
+  *) echo "[!] Unsupported arch: $ARCH"; exit 1 ;;
+esac
+curl -L -o /usr/local/bin/wings \
+  "https://github.com/pterodactyl/wings/releases/latest/download/wings_linux_${BINARCH}"
+chmod +x /usr/local/bin/wings
+echo "[+] Issuing SSL for $NODE_FQDN..."
+apt-get install -y certbot
+ufw allow 80/tcp || true
+ufw allow 443/tcp || true
+certbot certonly --standalone -d "${NODE_FQDN}" --non-interactive --agree-tos -m "${ADMIN_EMAIL}" || true
+CERT_PATH="/etc/letsencrypt/live/${NODE_FQDN}/fullchain.pem"
+KEY_PATH="/etc/letsencrypt/live/${NODE_FQDN}/privkey.pem"
+echo "[+] Fetching Wings config from panel..."
+/usr/local/bin/wings configure \
+  --panel-url "${PANEL_URL}" \
+  --token "${WINGS_TOKEN}" \
+  --node  "${NODE_ID}"
+CONFIG="/etc/pterodactyl/config.yml"
+echo "[+] Patching config..."
+sed -i 's/ssl: false/ssl: true/g' "$CONFIG"
+sed -i "s#certificate:.*#certificate: \"$CERT_PATH\"#g" "$CONFIG"
+sed -i "s#key:.*/.*#key: \"$KEY_PATH\"#g" "$CONFIG"
+cat >/etc/systemd/system/wings.service <<EOF
+[Unit]
+Description=Pterodactyl Wings Daemon
+After=docker.service
+Requires=docker.service
+[Service]
+User=root
+WorkingDirectory=/etc/pterodactyl
+LimitNOFILE=4096
+ExecStart=/usr/local/bin/wings
+Restart=on-failure
+StartLimitInterval=180
+StartLimitBurst=30
+RestartSec=5s
+[Install]
+WantedBy=multi-user.target
 EOF
-
-ln -sf /etc/nginx/sites-available/ctrlpanel.conf /etc/nginx/sites-enabled/
-rm -f /etc/nginx/sites-enabled/default
-nginx -t && systemctl restart nginx
-
-echo "[11] تثبيت SSL..."
-apt install -y certbot python3-certbot-nginx
-certbot --nginx -d $DOMAIN --non-interactive --agree-tos --email admin@$DOMAIN --redirect || true
-
-echo "[12] تشغيل الخدمات..."
-systemctl restart nginx php8.3-fpm redis-server
-
-echo "[✔] تم التثبيت بنجاح!"
+systemctl daemon-reload
+systemctl enable --now wings
+echo
+echo "=========================================="
+echo "[✔] Wings Installed Successfully!"
+echo "Node: ${NODE_FQDN}"
+echo "Config: /etc/pterodactyl/config.yml"
+echo "Service: systemctl status wings"
+echo "=========================================="

@@ -92,6 +92,12 @@ cp .env.example .env || true
 log "[8.2] إنشاء مفتاح التشفير..."
 php artisan key:generate || true
 # ============================
+log "[8.3] ضبط صلاحيات الملفات..."
+# ============================
+chown -R www-data:www-data /var/www/ctrlpanel
+chmod -R 775 /var/www/ctrlpanel
+chmod 664 /var/www/ctrlpanel/.env
+# ============================
 log "[9] تفعيل storage..."
 # ============================
 php artisan storage:link

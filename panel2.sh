@@ -80,11 +80,17 @@ tar -xzvf panel.tar.gz
 # --------------------------
 # STEP 6 – Fix Storage
 # --------------------------
+# --------------------------
+# STEP 6 – Fix Storage
+# --------------------------
 echo "[STEP] FIX_STORAGE"
+
 mkdir -p storage/{sessions,framework/{sessions,views,cache},logs}
 mkdir -p bootstrap/cache
-chmod -R 775 storage bootstrap || true
-chown -R www-data:www-data storage bootstrap || true
+
+# الصلاحيات الصحيحة قبل key:generate
+chown -R www-data:www-data storage bootstrap
+chmod -R 775 storage bootstrap
 
 # --------------------------
 # STEP 7 – Copy .env
@@ -93,11 +99,10 @@ echo "[STEP] ENV_COPY"
 cp -n .env.example .env
 
 # --------------------------
-# STEP 8 – Generate Key (BEFORE Composer!)
+# STEP 8 – Generate Key AFTER fixing permission
 # --------------------------
 echo "[STEP] KEY_GENERATE"
-php artisan key:generate --force
-
+sudo -u www-data php artisan key:generate --force
 # --------------------------
 # STEP 9 – Composer Install
 # --------------------------

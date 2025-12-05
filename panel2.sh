@@ -108,16 +108,27 @@ SQL
 #############################################
 # STEP 8 — ENV + KEY GEN (FIXED)
 #############################################
+# --------------------------
+# STEP – إصلاح APP_KEY ولمنع التحذير
+# --------------------------
 echo "[STEP] ENV_COPY"
 cp -n .env.example .env
 
-echo "[STEP] FIX_APP_KEY"
-# إزالة أي APP_KEY قديم لمنع ظهور رسالة التحذير
+echo "[STEP] ENV_CLEAN"
+# إزالة جميع سطور APP_KEY القديمة
 sed -i '/^APP_KEY=/d' .env
+# إنشاء سطر جديد فارغ
 echo "APP_KEY=" >> .env
 
 echo "[STEP] KEY_GENERATE"
-php artisan key:generate --force
+APP_KEY_OUTPUT=$(php artisan key:generate --force 2>&1)
+
+# إذا ظهر التحذير مرة أخرى نطبع الخطأ وننهي السكربت
+if echo "$APP_KEY_OUTPUT" | grep -q "WARNING"; then
+    echo "[ERR] Laravel يحاول التحذير لأن APP_KEY ما زال موجود!"
+    echo "$APP_KEY_OUTPUT"
+    exit 1
+fi
 #############################################
 # STEP 9 — INSTALL DEPENDENCIES
 #############################################

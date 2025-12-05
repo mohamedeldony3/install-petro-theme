@@ -75,9 +75,21 @@ cd $INSTALL_DIR
 # ============================
 log "[7] إعداد قاعدة البيانات..."
 # ============================
+
+# حذف المستخدم القديم في حال وجوده لمنع أخطاء الاتصال
+mysql -u root -e "DROP USER IF EXISTS '$DB_USER'@'localhost';"
+mysql -u root -e "DROP USER IF EXISTS '$DB_USER'@'127.0.0.1';"
+
+# حذف قاعدة البيانات القديمة
 mysql -u root -e "DROP DATABASE IF EXISTS $DB_NAME;"
+
+# إنشاء قاعدة البيانات
 mysql -u root -e "CREATE DATABASE $DB_NAME;"
-mysql -u root -e "CREATE USER IF NOT EXISTS '$DB_USER'@'127.0.0.1' IDENTIFIED BY '$DB_PASSWORD';"
+
+# إنشاء المستخدم بالطريقة الصحيحة التي تدعم Laravel
+mysql -u root -e "CREATE USER '$DB_USER'@'127.0.0.1' IDENTIFIED WITH mysql_native_password BY '$DB_PASSWORD';"
+
+# إعطاء جميع الصلاحيات
 mysql -u root -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'127.0.0.1';"
 mysql -u root -e "FLUSH PRIVILEGES;"
 

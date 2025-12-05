@@ -67,13 +67,23 @@ if ! command -v composer >/dev/null 2>&1; then
 fi
 
 # --------------------------
+# --------------------------
+# STEP 5 – تحميل اللوحة
+# --------------------------
 echo "[STEP] DOWNLOAD_PANEL"
 mkdir -p "${PANEL_DIR}"
 cd "${PANEL_DIR}"
+
 curl -Lo panel.tar.gz https://github.com/pterodactyl/panel/releases/latest/download/panel.tar.gz
 tar -xzvf panel.tar.gz
-chmod -R 755 storage/* bootstrap/cache/
 
+# إصلاح المجلدات المفقودة (مهم جداً)
+echo "[STEP] FIX_STORAGE"
+mkdir -p storage/framework/{sessions,views,cache}
+mkdir -p bootstrap/cache
+
+chmod -R 775 storage bootstrap
+chown -R www-data:www-data storage bootstrap || true
 # --------------------------
 echo "[STEP] DATABASE"
 mariadb <<SQL

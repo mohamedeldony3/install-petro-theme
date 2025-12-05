@@ -115,12 +115,6 @@ echo "[STEP] KEY_GENERATE"
 php artisan key:generate --force
 
 #############################################
-# STEP 9 — INSTALL DEPENDENCIES
-#############################################
-echo "[STEP] COMPOSER_INSTALL"
-COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader --no-interaction
-
-#############################################
 # STEP 10 — ENV UPDATE
 #############################################
 echo "[STEP] ENV_UPDATE"

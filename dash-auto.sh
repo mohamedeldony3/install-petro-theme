@@ -86,10 +86,12 @@ mysql -u root -e "DROP DATABASE IF EXISTS $DB_NAME;"
 # إنشاء قاعدة البيانات
 mysql -u root -e "CREATE DATABASE $DB_NAME;"
 
-# إنشاء المستخدم بدون mysql_native_password (متوافق مع MariaDB)
+# إنشاء المستخدم للحالتين (localhost و 127.0.0.1)
+mysql -u root -e "CREATE USER '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASSWORD';"
 mysql -u root -e "CREATE USER '$DB_USER'@'127.0.0.1' IDENTIFIED BY '$DB_PASSWORD';"
 
 # إعطاء الصلاحيات
+mysql -u root -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost';"
 mysql -u root -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'127.0.0.1';"
 mysql -u root -e "FLUSH PRIVILEGES;"
 

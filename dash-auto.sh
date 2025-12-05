@@ -95,6 +95,20 @@ mysql -u root -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost';"
 mysql -u root -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'127.0.0.1';"
 mysql -u root -e "FLUSH PRIVILEGES;"
 
+log "[7.1] تعديل ملف config/database.php لاستخدام بيانات MySQL مباشرة..."
+
+sed -i "s/'database' => env('DB_DATABASE', .*/'database' => '$DB_NAME',/" config/database.php
+sed -i "s/'username' => env('DB_USERNAME', .*/'username' => '$DB_USER',/" config/database.php
+sed -i "s/'password' => env('DB_PASSWORD', .*/'password' => '$DB_PASSWORD',/" config/database.php
+
+# حذف الاتصال القديم dashboard إن وجد
+sed -i "/dashboard/d" config/database.php
+
+# تنظيف الكاش لمنع Laravel من استخدام بيانات قديمة
+php artisan config:clear || true
+php artisan cache:clear || true
+php artisan config:cache || true
+
 # ============================
 log "[8] تثبيت حزم Composer..."
 # ============================

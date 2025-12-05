@@ -41,8 +41,12 @@ curl -L -o /usr/local/bin/wings \
 chmod +x /usr/local/bin/wings
 echo "[+] Issuing SSL for $NODE_FQDN..."
 apt-get install -y certbot
+sudo ufw enable
 ufw allow 80/tcp || true
 ufw allow 443/tcp || true
+ufw allow 8080 || true
+ufw allow 22 || true
+ufw allow 2022 || true
 certbot certonly --standalone -d "${NODE_FQDN}" --non-interactive --agree-tos -m "${ADMIN_EMAIL}" || true
 CERT_PATH="/etc/letsencrypt/live/${NODE_FQDN}/fullchain.pem"
 KEY_PATH="/etc/letsencrypt/live/${NODE_FQDN}/privkey.pem"

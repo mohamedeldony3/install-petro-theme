@@ -15,6 +15,12 @@ echo "Admin: $ADMIN_EMAIL"
 echo "Node : $NODE_ID"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
+sudo docker rm n8n-compose-file-traefik-1 n8n-compose-file-n8n-1
+sudo docker rm n8n-compose-file-traefik-1
+sudo docker stop n8n-compose-file-traefik-1 n8n-compose-file-n8n-1
+sudo docker rmi n8nio/n8n traefik
+sudo docker network rm n8n-compose-file_default
+sudo docker network rm n8n-compose-file_default
 apt-get install -y ca-certificates curl gnupg lsb-release ufw jq apt-transport-https software-properties-common
 echo "[+] Installing Docker..."
 curl -fsSL https://get.docker.com | CHANNEL=stable bash

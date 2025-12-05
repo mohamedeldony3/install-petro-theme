@@ -102,33 +102,38 @@ GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'%';
 FLUSH PRIVILEGES;
 SQL
 
-#############################################
-# STEP 8 — ENV + KEY GEN
-#############################################
-#############################################
-# STEP 8 — ENV + KEY GEN (FIXED)
-#############################################
 # --------------------------
-# STEP – إصلاح APP_KEY ولمنع التحذير
+# STEP – إصلاح APP_KEY لمنع التحذير نهائياً
 # --------------------------
 echo "[STEP] ENV_COPY"
 cp -n .env.example .env
 
+echo "[STEP] CLEAR_CACHE_BEFORE"
+php artisan config:clear >/dev/null 2>&1 || true
+php artisan cache:clear >/dev/null 2>&1 || true
+php artisan config:cache >/dev/null 2>&1 || true
+
 echo "[STEP] ENV_CLEAN"
-# إزالة جميع سطور APP_KEY القديمة
+# إزالة APP_KEY القديم بالكامل
 sed -i '/^APP_KEY=/d' .env
-# إنشاء سطر جديد فارغ
+# وضع APP_KEY فارغ جديد
 echo "APP_KEY=" >> .env
 
 echo "[STEP] KEY_GENERATE"
-APP_KEY_OUTPUT=$(php artisan key:generate --force 2>&1)
+# توليد المفتاح بدون توقف — نرسل yes تلقائياً
+APP_KEY_OUTPUT=$(printf "yes\n" | php artisan key:generate --force 2>&1)
 
-# إذا ظهر التحذير مرة أخرى نطبع الخطأ وننهي السكربت
-if echo "$APP_KEY_OUTPUT" | grep -q "WARNING"; then
+# إذا ظهر التحذير بأي شكل → مشكلة في APP_KEY
+if echo "$APP_KEY_OUTPUT" | grep -qi "WARNING"; then
     echo "[ERR] Laravel يحاول التحذير لأن APP_KEY ما زال موجود!"
     echo "$APP_KEY_OUTPUT"
     exit 1
 fi
+
+echo "[STEP] CLEAR_CACHE_AFTER"
+php artisan config:clear >/dev/null 2>&1 || true
+php artisan cache:clear >/dev/null 2>&1 || true
+php artisan config:cache >/dev/null 2>&1 || true
 #############################################
 # STEP 9 — INSTALL DEPENDENCIES
 #############################################

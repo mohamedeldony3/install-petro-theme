@@ -105,12 +105,19 @@ SQL
 #############################################
 # STEP 8 — ENV + KEY GEN
 #############################################
+#############################################
+# STEP 8 — ENV + KEY GEN (FIXED)
+#############################################
 echo "[STEP] ENV_COPY"
 cp -n .env.example .env
 
+echo "[STEP] FIX_APP_KEY"
+# إزالة أي APP_KEY قديم لمنع ظهور رسالة التحذير
+sed -i '/^APP_KEY=/d' .env
+echo "APP_KEY=" >> .env
+
 echo "[STEP] KEY_GENERATE"
 php artisan key:generate --force
-
 #############################################
 # STEP 9 — INSTALL DEPENDENCIES
 #############################################

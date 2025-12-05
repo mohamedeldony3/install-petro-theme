@@ -44,11 +44,18 @@ fi
 
 # Redis repo
 echo "[STEP] REDIS_REPO"
+set +e
 curl -fsSL https://packages.redis.io/gpg | gpg --dearmor -o /usr/share/keyrings/redis.gpg
-echo "deb [signed-by=/usr/share/keyrings/redis.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" > /etc/apt/sources.list.d/redis.list
+REDIS_KEY=$?
 
-apt update -y
-
+if [[ $REDIS_KEY -eq 0 ]]; then
+    echo "deb [signed-by=/usr/share/keyrings/redis.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" > /etc/apt/sources.list.d/redis.list
+    apt update -y
+    echo "[OK] Redis repo added"
+else
+    echo "[WARN] Could not add Redis repo. Falling back to default Ubuntu Redis"
+fi
+set -e
 
 # --------------------------
 # STEP 3 – تثبيت PHP + MariaDB + Nginx

@@ -1,6 +1,11 @@
 #!/bin/bash
 
-# Colors for output
+# ================================
+#   Nobita Hosting Fresh Installer
+#   Auto Mode — No Menu / No Input
+# ================================
+
+# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -8,222 +13,137 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 MAGENTA='\033[0;35m'
 WHITE='\033[1;37m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Function to print section headers
-print_header() {
-    echo -e "\n${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${CYAN} $1 ${NC}"
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
-}
-
-# Function to print status messages
-print_status() {
-    echo -e "${YELLOW}⏳ $1...${NC}"
-}
-
-print_success() {
-    echo -e "${GREEN}✅ $1${NC}"
-}
-
-print_error() {
-    echo -e "${RED}❌ $1${NC}"
-}
-
-print_warning() {
-    echo -e "${MAGENTA}⚠️  $1${NC}"
-}
-
-# Function to check if command succeeded
-check_success() {
-    if [ $? -eq 0 ]; then
-        print_success "$1"
-        return 0
-    else
-        print_error "$2"
-        return 1
-    fi
-}
-
-# Function to animate progress
-animate_progress() {
-    local pid=$1
-    local message=$2
-    local delay=0.1
-    local spinstr='|/-\'
-    
-    while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
-        local temp=${spinstr#?}
-        printf " [%c]  " "$spinstr"
-        local spinstr=$temp${spinstr%"$temp"}
-        sleep $delay
-        printf "\b\b\b\b\b\b"
-    done
-    printf "    \b\b\b\b"
-}
-
-# Welcome animation
-welcome_animation() {
-    clear
+step() { 
     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${CYAN}"
-    echo "   ███╗   ██╗ ██████╗ ██████╗ ██╗████████╗ █████╗ "
-    echo "   ████╗  ██║██╔═══██╗██╔══██╗██║╚══██╔══╝██╔══██╗"
-    echo "   ██╔██╗ ██║██║   ██║██████╔╝██║   ██║   ███████║"
-    echo "   ██║╚██╗██║██║   ██║██╔══██╗██║   ██║   ██╔══██║"
-    echo "   ██║ ╚████║╚██████╔╝██║  ██║██║   ██║   ██║  ██║"
-    echo "   ╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝╚═╝   ╚═╝   ╚═╝  ╚═╝"
-    echo -e "${NC}"
-    echo -e "${CYAN}              Blueprint Installer${NC}"
+    echo -e "${CYAN}STEP: $1${NC}"
     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    sleep 2
 }
 
-# Function: Install (Fresh Setup)
-install_nobita() {
-    print_header "FRESH INSTALLATION"
-    
-    if [ "$EUID" -ne 0 ]; then
-        print_error "Please run this script as root or with sudo"
-        return 1
-    fi
+ok()   { echo -e "${GREEN}✔ $1${NC}"; }
+fail() { echo -e "${RED}✘ $1${NC}"; exit 1; }
 
-    print_status "Starting Fresh Install for Nobita Hosting"
+log()  { echo -e "${YELLOW}⏳ $1...${NC}"; }
 
-    # --- Step 1: Install Node.js 20.x ---
-    print_header "INSTALLING NODE.JS 20.x"
-    print_status "Installing required packages"
-    sudo apt-get install -y ca-certificates curl gnupg > /dev/null 2>&1 &
-    animate_progress $! "Installing dependencies"
-    
-    print_status "Setting up Node.js repository"
-    sudo mkdir -p /etc/apt/keyrings
-    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | \
-      sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg > /dev/null 2>&1
-    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | \
-      sudo tee /etc/apt/sources.list.d/nodesource.list > /dev/null 2>&1
-      
-    print_status "Updating package lists"
-    sudo apt-get update > /dev/null 2>&1 &
-    animate_progress $! "Updating package lists"
-    
-    print_status "Installing Node.js"
-    sudo apt-get install -y nodejs > /dev/null 2>&1 &
-    animate_progress $! "Installing Node.js"
-    check_success "Node.js installed" "Failed to install Node.js"
+# ================================
+# شروع التثبيت
+# ================================
+clear
+echo -e "${CYAN}🚀 Starting Automatic Nobita Hosting Installation...${NC}"
 
-    # --- Step 2: Install Yarn, Dependencies & Nobita Hosting Release ---
-    print_header "INSTALLING DEPENDENCIES"
-    print_status "Installing Yarn"
-    npm i -g yarn > /dev/null 2>&1 &
-    animate_progress $! "Installing Yarn"
-    check_success "Yarn installed" "Failed to install Yarn"
+# ================================
+# STEP 1 — تحقق من الصلاحيات
+# ================================
+step "Checking root"
+if [ "$EUID" -ne 0 ]; then
+    fail "You must run this script as root."
+else
+    ok "Running as root"
+fi
 
-    print_status "Changing to panel directory"
-    cd /var/www/pterodactyl || { print_error "Panel directory not found!"; return 1; }
-    
-    print_status "Installing Yarn dependencies"
-    yarn > /dev/null 2>&1 &
-    animate_progress $! "Installing Yarn dependencies"
-    check_success "Yarn dependencies installed" "Failed to install Yarn dependencies"
+# ================================
+# STEP 2 — تثبيت المتطلبات
+# ================================
+step "Installing Dependencies"
 
-    print_status "Installing additional packages"
-    sudo apt install -y zip unzip git curl wget > /dev/null 2>&1 &
-    animate_progress $! "Installing additional packages"
-    check_success "Additional packages installed" "Failed to install additional packages"
+log "Installing base packages"
+apt-get install -y ca-certificates curl gnupg unzip git wget > /dev/null 2>&1 || fail "Failed installing dependencies"
+ok "Base packages installed"
 
-    # --- Step 3: Download and Extract Release ---
-    print_header "DOWNLOADING NOBITA HOSTING"
-    print_status "Downloading latest release"
-    wget "$(curl -s https://api.github.com/repos/BlueprintFramework/framework/releases/latest | \
-    grep 'browser_download_url' | cut -d '"' -f 4)" -O release.zip > /dev/null 2>&1 &
-    animate_progress $! "Downloading release"
-    check_success "Release downloaded" "Failed to download release"
+# ================================
+# STEP 3 — تثبيت Node.js 20
+# ================================
+step "Installing Node.js 20.x"
 
-    print_status "Extracting release files"
-    unzip -o release.zip > /dev/null 2>&1 &
-    animate_progress $! "Extracting files"
-    check_success "Files extracted" "Failed to extract files"
+log "Adding Node.js repo"
+mkdir -p /etc/apt/keyrings
+curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | \
+gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg || fail "Failed adding Node repo"
 
-    # --- Step 4: Run Nobita Hosting Installer ---
-    print_header "RUNNING BLUEPRINT INSTALLER"
-    if [ ! -f "blueprint.sh" ]; then
-        print_error "blueprint.sh not found in release package"
-        return 1
-    fi
+echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" \
+> /etc/apt/sources.list.d/nodesource.list
+ok "Node.js repo added"
 
-    print_status "Making blueprint.sh executable"
-    chmod +x blueprint.sh
-    check_success "Made executable" "Failed to make executable"
+log "Updating system"
+apt-get update > /dev/null 2>&1
+ok "System updated"
 
-    print_status "Running Blueprint installer"
-    bash blueprint.sh
-}
+log "Installing Node.js"
+apt-get install -y nodejs > /dev/null 2>&1 || fail "Failed installing Node.js"
+ok "Node.js installed"
 
-# Function: Reinstall (Rerun Only)
-reinstall_nobita() {
-    print_header "REINSTALLING NOBITA HOSTING"
-    print_status "Starting reinstallation"
-    blueprint -rerun-install > /dev/null 2>&1 &
-    animate_progress $! "Reinstalling"
-    check_success "Reinstallation completed" "Reinstallation failed"
-}
+# ================================
+# STEP 4 — تثبيت Yarn
+# ================================
+step "Installing Yarn"
 
-# Function: Update Nobita Hosting
-update_nobita() {
-    print_header "UPDATING NOBITA HOSTING"
-    print_status "Starting update"
-    blueprint -upgrade > /dev/null 2>&1 &
-    animate_progress $! "Updating"
-    check_success "Update completed" "Update failed"
-}
+log "Installing yarn globally"
+npm i -g yarn > /dev/null 2>&1 || fail "Yarn install failed"
+ok "Yarn installed"
 
-# Function to display the main menu
-show_menu() {
-    clear
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${CYAN}           🔧 BLUEPRINT INSTALLER               ${NC}"
-    echo -e "${CYAN}              Melsony Hosting                   ${NC}"
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e ""
-    echo -e "${WHITE}╔═══════════════════════════════════════════════╗${NC}"
-    echo -e "${WHITE}║                📋 MAIN MENU                   ║${NC}"
-    echo -e "${WHITE}╠═══════════════════════════════════════════════╣${NC}"
-    echo -e "${WHITE}║   ${GREEN}1)${NC} ${CYAN}Fresh Install${NC}                         ${WHITE}║${NC}"
-    echo -e "${WHITE}║   ${GREEN}2)${NC} ${CYAN}Reinstall (Rerun Only)${NC}                ${WHITE}║${NC}"
-    echo -e "${WHITE}║   ${GREEN}3)${NC} ${CYAN}Update Nobita Hosting${NC}                 ${WHITE}║${NC}"
-    echo -e "${WHITE}║   ${GREEN}0)${NC} ${RED}Exit${NC}                               ${WHITE}║${NC}"
-    echo -e "${WHITE}╚═══════════════════════════════════════════════╝${NC}"
-    echo -e ""
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${YELLOW}📝 Select an option [0-3]: ${NC}"
-}
+# ================================
+# STEP 5 — تجهيز مسار لوحة Pterodactyl
+# ================================
+step "Preparing Pterodactyl Directory"
 
-# Main execution
-welcome_animation
+if [ ! -d "/var/www/pterodactyl" ]; then
+    fail "/var/www/pterodactyl NOT FOUND! Install panel first."
+else
+    ok "Panel directory detected"
+fi
 
-while true; do
-    show_menu
-    read -r choice
-    
-    case $choice in
-        1) install_nobita ;;
-        2) reinstall_nobita ;;
-        3) update_nobita ;;
-        0) 
-            echo -e "${GREEN}Exiting Blueprint Installer...${NC}"
-            echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-            echo -e "${CYAN}          Thank you for using our tools! Melsony ${NC}"
-            echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-            sleep 2
-            exit 0 
-            ;;
-        *) 
-            print_error "Invalid option! Please choose between 0-3"
-            sleep 2
-            ;;
-    esac
-    
-    echo -e ""
-    read -p "$(echo -e "${YELLOW}Press Enter to continue...${NC}")" -n 1
-done
+cd /var/www/pterodactyl || fail "Cannot enter panel directory"
+
+# ================================
+# STEP 6 — تثبيت Dependencies
+# ================================
+step "Installing panel dependencies (Yarn)"
+
+log "Running yarn"
+yarn > /dev/null 2>&1 || fail "Yarn failed installing dependencies"
+ok "Panel dependencies installed"
+
+# ================================
+# STEP 7 — تحميل أحدث إصدار Nobita Hosting
+# ================================
+step "Downloading Nobita Hosting"
+
+LATEST_URL=$(curl -s https://api.github.com/repos/BlueprintFramework/framework/releases/latest | grep 'browser_download_url' | head -1 | cut -d '"' -f 4)
+
+if [ -z "$LATEST_URL" ]; then
+    fail "Could not fetch latest release"
+fi
+
+log "Downloading release"
+wget "$LATEST_URL" -O release.zip > /dev/null 2>&1 || fail "Download failed"
+ok "Download complete"
+
+log "Extracting release"
+unzip -o release.zip > /dev/null 2>&1 || fail "Extraction failed"
+ok "Files extracted"
+
+# ================================
+# STEP 8 — تشغيل Blueprint Installer
+# ================================
+step "Running Blueprint Installer"
+
+if [ ! -f "blueprint.sh" ]; then
+    fail "blueprint.sh NOT FOUND in release!"
+fi
+
+log "Making blueprint executable"
+chmod +x blueprint.sh
+ok "Executable set"
+
+log "Executing blueprint installer"
+bash blueprint.sh || fail "Blueprint installation failed"
+ok "Blueprint installation completed"
+
+# ================================
+# STEP 9 — انتهاء التثبيت
+# ================================
+step "Installation Complete"
+
+ok "Nobita Hosting Installed Successfully 🎉"
+echo -e "${CYAN}You may now restart your panel if required.${NC}"

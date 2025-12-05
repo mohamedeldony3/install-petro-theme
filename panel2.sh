@@ -3,11 +3,10 @@ set -Eeuo pipefail
 
 log(){ echo -e "\033[1;32m[+] $*\033[0m"; }
 err(){ echo -e "\033[1;31m[✗] $*\033[0m"; }
-
 trap 'err "حدث خطأ غير متوقع"' ERR
 
 # --------------------------
-# متغيرات يتم استبدالها من البوت
+# VARIABLES FROM THE BOT
 # --------------------------
 DOMAIN="{{DOMAIN}}"
 ADMIN_EMAIL="{{EMAIL}}"
@@ -24,11 +23,15 @@ DB_USER="pterodactyl"
 DB_PASS="1942003"
 
 # --------------------------
+# STEP 1 – UPDATE SYSTEM
+# --------------------------
 echo "[STEP] UPDATE"
 apt update -y
 apt upgrade -y
 apt install -y software-properties-common curl apt-transport-https ca-certificates gnupg lsb-release unzip git tar dnsutils netcat-openbsd
 
+# --------------------------
+# STEP 2 – PHP Repository
 # --------------------------
 echo "[STEP] PHP_REPO"
 UBU_VER="$(lsb_release -rs || true)"
@@ -37,19 +40,24 @@ if [[ "$UBU_VER" == "22.04" ]]; then
 fi
 
 # --------------------------
+# STEP 3 – Redis Repo (Safe Mode)
+# --------------------------
 echo "[STEP] REDIS_REPO"
-(
-    set +e
-    curl -fsSL https://packages.redis.io/gpg | gpg --dearmor -o /usr/share/keyrings/redis.gpg
-    if [[ $? -eq 0 ]]; then
-        echo "deb [signed-by=/usr/share/keyrings/redis.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" > /etc/apt/sources.list.d/redis.list
-        apt update -y
-        echo "[OK] Redis repo added"
-    else
-        echo "[WARN] Redis repo failed — using default Redis"
-    fi
-) || true
+set +e
+curl -fsSL https://packages.redis.io/gpg | gpg --dearmor -o /usr/share/keyrings/redis.gpg
+REDIS_KEY=$?
+if [[ $REDIS_KEY -eq 0 ]]; then
+    echo "deb [signed-by=/usr/share/keyrings/redis.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" \
+    > /etc/apt/sources.list.d/redis.list
+    apt update -y
+    echo "[OK] Redis repo added"
+else
+    echo "[WARN] Redis repo skipped — using Ubuntu Redis"
+fi
+set -e
 
+# --------------------------
+# STEP 4 – Install PHP + MariaDB + Nginx
 # --------------------------
 echo "[STEP] PHP_INSTALL"
 apt install -y \
@@ -61,50 +69,43 @@ apt install -y \
 systemctl enable --now php${PHP_VERSION}-fpm mariadb nginx redis-server
 
 # --------------------------
-echo "[STEP] COMPOSER"
-if ! command -v composer >/dev/null 2>&1; then
-    curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-fi
-
-# --------------------------
-# --------------------------
-# STEP 5 – تحميل اللوحة
+# STEP 5 – Download Panel
 # --------------------------
 echo "[STEP] DOWNLOAD_PANEL"
 mkdir -p "${PANEL_DIR}"
 cd "${PANEL_DIR}"
-
 curl -Lo panel.tar.gz https://github.com/pterodactyl/panel/releases/latest/download/panel.tar.gz
 tar -xzvf panel.tar.gz
 
-# إصلاح المجلدات المفقودة (مهم جداً)
-echo "[STEP] FIX_STORAGE"
-mkdir -p storage/framework/{sessions,views,cache}
-mkdir -p bootstrap/cache
-
-chmod -R 775 storage bootstrap
-chown -R www-data:www-data storage bootstrap || true
 # --------------------------
-echo "[STEP] DATABASE"
-mariadb <<SQL
-CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\`;
-CREATE USER IF NOT EXISTS '${DB_USER}'@'127.0.0.1' IDENTIFIED BY '${DB_PASS}';
-GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'127.0.0.1';
-FLUSH PRIVILEGES;
-SQL
+# STEP 6 – Fix Storage
+# --------------------------
+echo "[STEP] FIX_STORAGE"
+mkdir -p storage/{sessions,framework/{sessions,views,cache},logs}
+mkdir -p bootstrap/cache
+chmod -R 775 storage bootstrap || true
+chown -R www-data:www-data storage bootstrap || true
 
+# --------------------------
+# STEP 7 – Copy .env
 # --------------------------
 echo "[STEP] ENV_COPY"
 cp -n .env.example .env
 
 # --------------------------
-echo "[STEP] COMPOSER_INSTALL"
-COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader --no-interaction
-
+# STEP 8 – Generate Key (BEFORE Composer!)
 # --------------------------
 echo "[STEP] KEY_GENERATE"
 php artisan key:generate --force
 
+# --------------------------
+# STEP 9 – Composer Install
+# --------------------------
+echo "[STEP] COMPOSER_INSTALL"
+COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader --no-interaction
+
+# --------------------------
+# STEP 10 – Edit ENV
 # --------------------------
 echo "[STEP] ENV"
 sed -i "s|APP_URL=.*|APP_URL=https://${DOMAIN}|g" .env
@@ -114,9 +115,13 @@ sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=${DB_PASS}|g" .env
 echo "APP_ENVIRONMENT_ONLY=false" >> .env
 
 # --------------------------
+# STEP 11 – Migrate + Seed
+# --------------------------
 echo "[STEP] ARTISAN"
 php artisan migrate --seed --force
 
+# --------------------------
+# STEP 12 – Create Admin User
 # --------------------------
 echo "[STEP] ADMIN_USER"
 php artisan p:user:make \
@@ -129,10 +134,14 @@ php artisan p:user:make \
   --no-interaction
 
 # --------------------------
+# STEP 13 – Permissions
+# --------------------------
 echo "[STEP] PERMISSIONS"
 chown -R www-data:www-data "${PANEL_DIR}"
 chmod -R 755 "${PANEL_DIR}"
 
+# --------------------------
+# STEP 14 – Nginx Setup
 # --------------------------
 echo "[STEP] NGINX"
 cat > /etc/nginx/sites-available/pterodactyl.conf <<EOF
@@ -157,10 +166,17 @@ ln -sf /etc/nginx/sites-available/pterodactyl.conf /etc/nginx/sites-enabled/
 nginx -t && systemctl restart nginx
 
 # --------------------------
+# STEP 15 – SSL
+# --------------------------
 echo "[STEP] SSL"
 apt install -y certbot python3-certbot-nginx
 certbot --nginx -d "${DOMAIN}" -m "${ADMIN_EMAIL}" --agree-tos --non-interactive || true
 
 # --------------------------
+# STEP 16 – DONE
+# --------------------------
 echo "[STEP] DONE"
-echo "تم التثبيت!"
+echo "تم التثبيت بنجاح 🎉"
+echo "الرابط: https://${DOMAIN}"
+echo "البريد: ${ADMIN_EMAIL}"
+echo "المستخدم: ${ADMIN_USERNAME}"

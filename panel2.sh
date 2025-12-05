@@ -1,46 +1,50 @@
 #!/bin/bash
 clear
 
+echo "[STEP] START"
+
 # 🟢 Bot Injected Variables
 DOMAIN="{{DOMAIN}}"
 ADMIN_EMAIL="{{EMAIL}}"
 ADMIN_USER="{{ADMIN_USER}}"
 ADMIN_PASS="{{ADMIN_PASS}}"
 
-# --- Dependencies ---
+echo "[STEP] DEPENDENCIES"
 apt update && apt install -y curl apt-transport-https ca-certificates gnupg unzip git tar sudo lsb-release
 
 # Detect OS
 OS=$(lsb_release -is | tr '[:upper:]' '[:lower:]')
 
 if [[ "$OS" == "ubuntu" ]]; then
+    echo "[STEP] ADD_PPA"
     apt install -y software-properties-common
     LC_ALL=C.UTF-8 add-apt-repository -y ppa:ondrej/php
 else
+    echo "[STEP] PHP_REPO_DEBIAN"
     curl -fsSL https://packages.sury.org/php/apt.gpg | gpg --dearmor -o /usr/share/keyrings/sury-php.gpg
     echo "deb [signed-by=/usr/share/keyrings/sury-php.gpg] https://packages.sury.org/php/ $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/sury-php.list
 fi
 
-# Add Redis repo
+echo "[STEP] REDIS_REPO"
 curl -fsSL https://packages.redis.io/gpg | gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg
 echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/redis.list
 
 apt update
 
-# Install PHP / Nginx / MariaDB
+echo "[STEP] PHP"
 apt install -y php8.3 php8.3-{cli,fpm,common,mysql,mbstring,bcmath,xml,zip,curl,gd,tokenizer,ctype,simplexml,dom} mariadb-server nginx redis-server
 
-# Composer
+echo "[STEP] COMPOSER"
 curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Download panel
+echo "[STEP] DOWNLOAD_PANEL"
 mkdir -p /var/www/pterodactyl
 cd /var/www/pterodactyl
 curl -Lo panel.tar.gz https://github.com/pterodactyl/panel/releases/latest/download/panel.tar.gz
 tar -xzvf panel.tar.gz
 chmod -R 755 storage/* bootstrap/cache/
 
-# MariaDB Setup
+echo "[STEP] DATABASE"
 DB_NAME=panel
 DB_USER=pterodactyl
 DB_PASS="yourPassword"
@@ -50,7 +54,7 @@ mariadb -e "CREATE DATABASE ${DB_NAME};"
 mariadb -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'127.0.0.1' WITH GRANT OPTION;"
 mariadb -e "FLUSH PRIVILEGES;"
 
-# ENV
+echo "[STEP] ENV"
 cp .env.example .env
 
 sed -i "s|APP_URL=.*|APP_URL=https://${DOMAIN}|g" .env
@@ -60,29 +64,30 @@ sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=${DB_PASS}|g" .env
 
 echo "APP_ENVIRONMENT_ONLY=false" >> .env
 
-# Composer install
+echo "[STEP] COMPOSER_INSTALL"
 COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader
 
-# Laravel setup
+echo "[STEP] ARTISAN"
 php artisan key:generate --force
 php artisan migrate --seed --force
 
-# Permissions
+echo "[STEP] PERMISSIONS"
 chown -R www-data:www-data /var/www/pterodactyl/*
 
-# Cron
+echo "[STEP] CRON"
 apt install -y cron
 systemctl enable --now cron
 (crontab -l 2>/dev/null; echo "* * * * * php /var/www/pterodactyl/artisan schedule:run >> /dev/null 2>&1") | crontab -
 
-# SSL Self-signed
+echo "[STEP] SSL"
 mkdir -p /etc/certs/panel
 cd /etc/certs/panel
+
 openssl req -new -newkey rsa:4096 -days 3650 -nodes -x509 \
 -subj "/C=NA/ST=NA/L=NA/O=NA/CN=${DOMAIN}" \
 -keyout privkey.pem -out fullchain.pem
 
-# Nginx
+echo "[STEP] NGINX"
 tee /etc/nginx/sites-available/pterodactyl.conf > /dev/null << EOF
 server {
     listen 80;
@@ -116,3 +121,5 @@ EOF
 
 ln -s /etc/nginx/sites-available/pterodactyl.conf /etc/nginx/sites-enabled/
 nginx -t && systemctl restart nginx
+
+echo "[STEP] DONE"

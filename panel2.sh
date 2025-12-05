@@ -85,9 +85,22 @@ chmod -R 755 storage/* bootstrap/cache/
 # --------------------------
 echo "[STEP] DATABASE"
 mariadb <<SQL
-CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\`;
+CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- مستخدم للاتصال عبر 127.0.0.1
 CREATE USER IF NOT EXISTS '${DB_USER}'@'127.0.0.1' IDENTIFIED BY '${DB_PASS}';
+
+-- مستخدم للاتصال عبر localhost
+CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';
+
+-- مستخدم عام (للاحتياط)
+CREATE USER IF NOT EXISTS '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASS}';
+
+-- صلاحيات كاملة للجميع
 GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'127.0.0.1';
+GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'localhost';
+GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'%';
+
 FLUSH PRIVILEGES;
 SQL
 

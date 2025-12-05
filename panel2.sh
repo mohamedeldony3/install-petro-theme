@@ -99,13 +99,14 @@ SQL
 # --------------------------
 # STEP 7 – Composer install + APP_KEY
 # --------------------------
-echo "[STEP] COMPOSER_INSTALL"
+echo "[STEP] ENV_COPY"
 cp -n .env.example .env
-COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader --no-interaction
 
+echo "[STEP] KEY_GENERATE"
 php artisan key:generate --force
 
-
+echo "[STEP] COMPOSER_INSTALL"
+COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader --no-interaction
 # --------------------------
 # STEP 8 – تعديل .env
 # --------------------------

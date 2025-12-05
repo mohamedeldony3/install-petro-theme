@@ -107,6 +107,9 @@ SQL
 #############################################
 echo "[STEP] ENV_COPY"
 cp -n .env.example .env
+echo "[STEP] COMPOSER_INSTALL"
+
+COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader --no-interaction
 
 echo "[STEP] KEY_GENERATE"
 php artisan key:generate --force

@@ -92,10 +92,17 @@ certbot certonly --standalone \
   -d "${NODE_FQDN}" \
   -m "${ADMIN_EMAIL}" \
   --agree-tos --non-interactive || true
+sudo chmod 644 /etc/letsencrypt/live/nnode.speedhost.store/fullchain.pem
+sudo chmod 600 /etc/letsencrypt/live/nnode.speedhost.store/privkey.pem
+sudo chown root:root /etc/letsencrypt/archive/nnode.speedhost.store/* 
+sudo setfacl -m u:pterodactyl:r /etc/letsencrypt/live/nnode.speedhost.store/privkey.pem
+sudo setfacl -m u:pterodactyl:r /etc/letsencrypt/archive/nnode.speedhost.store/privkey1.pem
+
 sudo systemctl start nginx
 CERT_PATH="/etc/letsencrypt/live/${NODE_FQDN}/fullchain.pem"
 KEY_PATH="/etc/letsencrypt/live/${NODE_FQDN}/privkey.pem"
-
+systemctl restart wings
+systemctl status wings
 # ===============================
 # STEP 6 — FETCH WINGS CONFIG
 # ===============================

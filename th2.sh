@@ -1,47 +1,43 @@
 #!/bin/bash
 
 step(){ echo "[STEP] $1"; }
-error(){ echo "[ERROR] $1"; exit 1; }
-
-export DEBIAN_FRONTEND=noninteractive
+fail(){ echo "[ERROR] $1"; exit 1; }
 
 step "START_NEBULA"
 
-TARGET="/var/www/pterodactyl"
-TEMP="/tmp/nebula_repo"
+TARGET_DIR="/var/www/pterodactyl"
+TEMP="/tmp/nebo-repo"
 
-# Root check
+# ROOT CHECK
 step "CHECK_ROOT"
-[[ $EUID -ne 0 ]] && error "run as root"
+[[ $EUID -ne 0 ]] && fail "Run as root"
 
-# Check panel directory
+# CHECK PANEL
 step "CHECK_PANEL_PATH"
-[[ ! -d $TARGET ]] && error "panel path missing"
+[[ ! -d $TARGET_DIR ]] && fail "panel not found"
 
-# Clean temp dir
+# CLEAN TEMP
 step "CLEAN_TEMP"
-rm -rf $TEMP
+rm -rf $TEMP >/dev/null 2>&1
 
-# Clone repo
-step "CLONE_REPO"
-git clone https://github.com/mohamedeldony3/nebo.git "$TEMP" || error "clone failed"
+# GIT CLONE
+step "CLONE_NEBULA_REPO"
+git clone https://github.com/mohamedeldony3/nebo.git $TEMP >/dev/null 2>&1 || fail "clone failed"
 
-# Check blueprint file
+# CHECK FILE
 step "CHECK_BLUEPRINT_FILE"
-[[ ! -f "$TEMP/nebula.blueprint" ]] && error "nebula.blueprint missing"
+[[ ! -f "$TEMP/nebula.blueprint" ]] && fail "nebula.blueprint missing"
 
-# Move file
-step "MOVE_FILE"
-mv "$TEMP/nebula.blueprint" "$TARGET/" || error "move failed"
+# MOVE BLUEPRINT
+step "MOVE_BLUEPRINT"
+mv "$TEMP/nebula.blueprint" "$TARGET_DIR/" >/dev/null 2>&1 || fail "move failed"
 
-# Clean temp
-step "REMOVE_TEMP"
-rm -rf "$TEMP"
+rm -rf $TEMP >/dev/null 2>&1
 
-# Run Nebula through blueprint
-step "RUN_NEBULA"
-cd "$TARGET" || error "cd failed"
-command -v blueprint >/dev/null || error "blueprint CLI not installed"
-blueprint -i nebula.blueprint || error "nebula install failed"
+cd $TARGET_DIR
+
+# RUN BLUEPRINT
+step "RUN_NEBULA_BLUEPRINT"
+blueprint -i nebula.blueprint >/dev/null 2>&1 || fail "nebula install failed"
 
 step "NEBULA_DONE"

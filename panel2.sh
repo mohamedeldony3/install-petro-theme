@@ -50,13 +50,19 @@ apt update -y
 # INSTALL SERVICES
 # ===========================
 echo "[STEP] PHP_INSTALL"
-apt install -y \
-  php${PHP_VERSION} php${PHP_VERSION}-fpm php${PHP_VERSION}-cli php${PHP_VERSION}-common \
-  php${PHP_VERSION}-gd php${PHP_VERSION}-mysql php${PHP_VERSION}-mbstring \
-  php${PHP_VERSION}-bcmath php${PHP_VERSION}-xml php${PHP_VERSION}-zip \
-  php${PHP_VERSION}-curl unzip git tar mariadb-server nginx redis-server composer
 
-systemctl enable --now php${PHP_VERSION}-fpm mariadb nginx redis-server
+# تثبيت PHP 8.3 (لخدمة NGINX)
+apt install -y \
+  php8.3 php8.3-fpm php8.3-cli php8.3-common \
+  php8.3-gd php8.3-mysql php8.3-mbstring \
+  php8.3-bcmath php8.3-xml php8.3-zip \
+  php8.3-curl unzip git tar mariadb-server nginx redis-server composer
+
+# إضافة الامتدادات الناقصة لنسخة 8.4 (مطلوبة للـ Composer)
+apt install -y \
+  php8.4-mysql php8.4-xml php8.4-simplexml php8.4-bcmath php8.4-dom php8.4-mbstring php8.4-gd php8.4-curl
+
+systemctl enable --now php8.3-fpm mariadb nginx redis-server
 
 # ===========================
 # CREATE PANEL DIR

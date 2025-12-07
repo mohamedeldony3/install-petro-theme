@@ -26,7 +26,24 @@ echo "[STEP] UPDATE"
 apt update -y
 apt upgrade -y
 apt install -y software-properties-common curl apt-transport-https ca-certificates gnupg lsb-release unzip git tar dnsutils netcat-openbsd
+#############################################
+# FIX — INSTALL PHP CLI + COMPOSER
+#############################################
+echo "[STEP] FIX_DEPENDENCIES"
 
+# تأكد من صلاحيات root
+if [[ "$EUID" -ne 0 ]]; then
+  err "السكربت يجب تشغيله كـ ROOT"
+  exit 1
+fi
+
+apt update -y
+apt install -y php-cli php-zip unzip curl
+
+echo "[STEP] INSTALL_COMPOSER"
+curl -sS https://getcomposer.org/installer -o composer-setup.php
+php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+rm composer-setup.php
 #############################################
 # STEP 2 — PHP REPO
 #############################################

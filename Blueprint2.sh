@@ -1,56 +1,52 @@
 #!/bin/bash
 
 step(){ echo "[STEP] $1"; }
-fail(){ echo "[ERROR] $1"; exit 1; }
+error(){ echo "[ERROR] $1"; exit 1; }
 
-clear
+export DEBIAN_FRONTEND=noninteractive
+export GPG_TTY=/dev/null
+
 step "START_BLUEPRINT_INSTALL"
 
 # ROOT CHECK
 step "CHECK_ROOT"
-[[ $EUID -ne 0 ]] && fail "Run as root"
+[[ $EUID -ne 0 ]] && error "Run this script as root"
 
 # DEPENDENCIES
 step "INSTALL_DEPENDENCIES"
-apt-get update -y >/dev/null 2>&1
-apt-get install -y ca-certificates curl gnupg unzip git wget >/dev/null 2>&1 || fail "dependencies failed"
+apt update -y || error "apt update failed"
+apt install -y ca-certificates curl gnupg unzip git wget software-properties-common lsb-release || error "dependencies failed"
 
-# NODE 20
+# FIX NODEJS (Official Ubuntu Repo)
 step "INSTALL_NODEJS"
-mkdir -p /etc/apt/keyrings
-curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
- | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-
-echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" \
- > /etc/apt/sources.list.d/nodesource.list
-
-apt-get update -y >/dev/null 2>&1
-apt-get install -y nodejs >/dev/null 2>&1 || fail "nodejs failed"
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash - || error "nodesource setup failed"
+apt install -y nodejs || error "nodejs failed"
 
 # YARN
 step "INSTALL_YARN"
-npm install -g yarn >/dev/null 2>&1 || fail "yarn failed"
+npm install -g yarn || error "yarn failed"
 
 # PANEL PATH
 step "CHECK_PANEL_PATH"
-[[ ! -d /var/www/pterodactyl ]] && fail "panel not found"
-cd /var/www/pterodactyl
+[[ ! -d /var/www/pterodactyl ]] && error "pterodactyl panel not found"
+cd /var/www/pterodactyl || error "cannot cd panel"
 
-# YARN INSTALL
+# INSTALL PANEL DEPENDENCIES
 step "INSTALL_PANEL_DEPENDENCIES"
-yarn >/dev/null 2>&1 || fail "yarn install failed"
+yarn install || error "yarn install failed"
 
-# DOWNLOAD NOBITA
+# DOWNLOAD BLUEPRINT NOBITA
 step "DOWNLOAD_NOBITA"
 URL=$(curl -s https://api.github.com/repos/BlueprintFramework/framework/releases/latest \
- | grep browser_download_url | head -1 | cut -d '"' -f 4)
+ | grep browser_download_url | grep ".zip" | head -1 | cut -d '"' -f 4)
 
-wget "$URL" -O release.zip >/dev/null 2>&1 || fail "download failed"
-unzip -o release.zip >/dev/null 2>&1 || fail "extract failed"
+[[ -z "$URL" ]] && error "failed to fetch release"
+wget "$URL" -O release.zip || error "download failed"
+unzip -o release.zip || error "extract failed"
 
-# RUN BLUEPRINT INSTALLER
+# BLUEPRINT INSTALLER
 step "RUN_BLUEPRINT_INSTALLER"
-chmod +x blueprint.sh
-bash blueprint.sh >/dev/null 2>&1 || fail "blueprint install failed"
+chmod +x blueprint.sh || error "chmod failed"
+bash blueprint.sh || error "blueprint install failed"
 
 step "BLUEPRINT_DONE"

@@ -87,12 +87,12 @@ ufw allow 2022/tcp || true
 ufw --force enable || true
 
 apt-get install -y certbot
-
+sudo systemctl stop nginx
 certbot certonly --standalone \
   -d "${NODE_FQDN}" \
   -m "${ADMIN_EMAIL}" \
   --agree-tos --non-interactive || true
-
+sudo systemctl start nginx
 CERT_PATH="/etc/letsencrypt/live/${NODE_FQDN}/fullchain.pem"
 KEY_PATH="/etc/letsencrypt/live/${NODE_FQDN}/privkey.pem"
 

@@ -25,7 +25,7 @@ log "[1] تحديث النظام..."
 apt update -y && apt upgrade -y
 
 # ============================
-log "[2] إزالة مستودعات PHP القديمة (Sury)..."
+log "[2] إزالة مستودعات PHP القديمة..."
 # ============================
 rm -f /etc/apt/sources.list.d/php.list
 rm -f /etc/apt/trusted.gpg.d/php.gpg
@@ -33,7 +33,7 @@ rm -f /etc/apt/sources.list.d/sury*
 apt update -y || true
 
 # ============================
-log "[3] إضافة مستودع PHP الرسمي (Ondrej/php)..."
+log "[3] إضافة مستودع PHP الرسمي..."
 # ============================
 apt install -y software-properties-common ca-certificates curl gnupg lsb-release
 LC_ALL=C.UTF-8 add-apt-repository ppa:ondrej/php -y
@@ -48,13 +48,11 @@ apt install -y \
 
 systemctl enable --now redis-server
 
-apt install -y php8.3-redis
-systemctl restart php8.3-fpm
-
 # ============================
 log "[4.1] تثبيت امتداد Redis لـ PHP..."
 # ============================
 apt install -y php8.3-redis
+phpenmod redis || true
 systemctl restart php8.3-fpm
 
 # ============================
@@ -75,60 +73,58 @@ cd $INSTALL_DIR
 # ============================
 log "[7] إعداد قاعدة البيانات..."
 # ============================
-
-# حذف المستخدم القديم لو موجود
 mysql -u root -e "DROP USER IF EXISTS '$DB_USER'@'localhost';"
 mysql -u root -e "DROP USER IF EXISTS '$DB_USER'@'127.0.0.1';"
-
-# حذف قاعدة البيانات القديمة
 mysql -u root -e "DROP DATABASE IF EXISTS $DB_NAME;"
-
-# إنشاء قاعدة البيانات
 mysql -u root -e "CREATE DATABASE $DB_NAME;"
-
-# إنشاء المستخدم للحالتين (localhost و 127.0.0.1)
 mysql -u root -e "CREATE USER '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASSWORD';"
 mysql -u root -e "CREATE USER '$DB_USER'@'127.0.0.1' IDENTIFIED BY '$DB_PASSWORD';"
-
-# إعطاء الصلاحيات
 mysql -u root -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost';"
 mysql -u root -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'127.0.0.1';"
 mysql -u root -e "FLUSH PRIVILEGES;"
 
-log "[7.1] تعديل ملف config/database.php لاستخدام بيانات MySQL مباشرة..."
-
+log "[7.1] تعديل config/database.php..."
 sed -i "s/'database' => env('DB_DATABASE', .*/'database' => '$DB_NAME',/" config/database.php
 sed -i "s/'username' => env('DB_USERNAME', .*/'username' => '$DB_USER',/" config/database.php
 sed -i "s/'password' => env('DB_PASSWORD', .*/'password' => '$DB_PASSWORD',/" config/database.php
-
-# حذف الاتصال القديم dashboard إن وجد
 sed -i "/dashboard/d" config/database.php
 
-# تنظيف الكاش لمنع Laravel من استخدام بيانات قديمة
+# ============================
+log "[7.2] تنظيف كاش Laravel قبل التثبيت..."
+# ============================
 php artisan config:clear || true
 php artisan cache:clear || true
-php artisan config:cache || true
+php artisan optimize:clear || true
 
 # ============================
-log "[8] تثبيت حزم Composer..."
+log "[8] تثبيت Composer Packages..."
 # ============================
 COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader
 
-log "[8.1] إنشاء ملف .env..."
+log "[8.1] إنشاء .env..."
 cp .env.example .env || true
 
-log "[8.2] إنشاء مفتاح التشفير..."
+log "[8.2] إنشاء APP_KEY..."
 php artisan key:generate || true
+
 # ============================
-log "[8.3] ضبط صلاحيات الملفات..."
+log "[8.3] تفعيل storage..."
+# ============================
+php artisan storage:link
+
+# ============================
+log "[8.4] تنظيف الكاش بعد التثبيت..."
+# ============================
+php artisan config:clear || true
+php artisan cache:clear || true
+php artisan optimize:clear || true
+
+# ============================
+log "[9] صلاحيات الملفات..."
 # ============================
 chown -R www-data:www-data /var/www/ctrlpanel
 chmod -R 775 /var/www/ctrlpanel
 chmod 664 /var/www/ctrlpanel/.env
-# ============================
-log "[9] تفعيل storage..."
-# ============================
-php artisan storage:link
 
 # ============================
 log "[10] إعداد Nginx..."
@@ -155,7 +151,6 @@ EOF
 
 ln -sf /etc/nginx/sites-available/ctrlpanel.conf /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
-
 nginx -t && systemctl restart nginx
 
 # ============================
@@ -171,9 +166,7 @@ systemctl restart nginx php8.3-fpm redis-server mariadb
 
 # ============================
 log "[✔] تم التثبيت بنجاح!"
-log "الرابط: https://$DOMAIN/installer"
+log "🔗 الرابط: https://$DOMAIN/installer"
 
-# حذف السكربت نفسه
 rm -f dash.sh
-
 exit 0
